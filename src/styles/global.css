@@ -1,0 +1,746 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+@import "@fontsource-variable/geist";
+@import "@fontsource-variable/geist-mono";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+    --font-heading: var(--font-sans);
+    --font-sans: 'Geist Variable', sans-serif;
+    --color-sidebar-ring: var(--sidebar-ring);
+    --color-sidebar-border: var(--sidebar-border);
+    --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+    --color-sidebar-accent: var(--sidebar-accent);
+    --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+    --color-sidebar-primary: var(--sidebar-primary);
+    --color-sidebar-foreground: var(--sidebar-foreground);
+    --color-sidebar: var(--sidebar);
+    --color-chart-5: var(--chart-5);
+    --color-chart-4: var(--chart-4);
+    --color-chart-3: var(--chart-3);
+    --color-chart-2: var(--chart-2);
+    --color-chart-1: var(--chart-1);
+    --color-ring: var(--ring);
+    --color-input: var(--input);
+    --color-border: var(--border);
+    --color-destructive: var(--destructive);
+    --color-accent-foreground: var(--accent-foreground);
+    --color-accent: var(--accent);
+    --color-muted-foreground: var(--muted-foreground);
+    --color-muted: var(--muted);
+    --color-secondary-foreground: var(--secondary-foreground);
+    --color-secondary: var(--secondary);
+    --color-primary-foreground: var(--primary-foreground);
+    --color-primary: var(--primary);
+    --color-popover-foreground: var(--popover-foreground);
+    --color-popover: var(--popover);
+    --color-card-foreground: var(--card-foreground);
+    --color-card: var(--card);
+    --color-foreground: var(--foreground);
+    --color-background: var(--background);
+    --radius-sm: calc(var(--radius) * 0.6);
+    --radius-md: calc(var(--radius) * 0.8);
+    --radius-lg: var(--radius);
+    --radius-xl: calc(var(--radius) * 1.4);
+    --radius-2xl: calc(var(--radius) * 1.8);
+    --radius-3xl: calc(var(--radius) * 2.2);
+    --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+:root {
+    --background: oklch(1 0 0);
+    --foreground: oklch(0.145 0 0);
+    --card: oklch(1 0 0);
+    --card-foreground: oklch(0.145 0 0);
+    --popover: oklch(1 0 0);
+    --popover-foreground: oklch(0.145 0 0);
+    --primary: oklch(0.205 0 0);
+    --primary-foreground: oklch(0.985 0 0);
+    --secondary: oklch(0.97 0 0);
+    --secondary-foreground: oklch(0.205 0 0);
+    --muted: oklch(0.97 0 0);
+    --muted-foreground: oklch(0.556 0 0);
+    --accent: oklch(0.97 0 0);
+    --accent-foreground: oklch(0.205 0 0);
+    --destructive: oklch(0.577 0.245 27.325);
+    --border: oklch(0.922 0 0);
+    --input: oklch(0.922 0 0);
+    --ring: oklch(0.708 0 0);
+    --chart-1: oklch(0.87 0 0);
+    --chart-2: oklch(0.556 0 0);
+    --chart-3: oklch(0.439 0 0);
+    --chart-4: oklch(0.371 0 0);
+    --chart-5: oklch(0.269 0 0);
+    --radius: 0.625rem;
+    --sidebar: oklch(0.985 0 0);
+    --sidebar-foreground: oklch(0.145 0 0);
+    --sidebar-primary: oklch(0.205 0 0);
+    --sidebar-primary-foreground: oklch(0.985 0 0);
+    --sidebar-accent: oklch(0.97 0 0);
+    --sidebar-accent-foreground: oklch(0.205 0 0);
+    --sidebar-border: oklch(0.922 0 0);
+    --sidebar-ring: oklch(0.708 0 0);
+}
+
+.dark {
+    --background: oklch(0.145 0 0);
+    --foreground: oklch(0.985 0 0);
+    --card: oklch(0.205 0 0);
+    --card-foreground: oklch(0.985 0 0);
+    --popover: oklch(0.205 0 0);
+    --popover-foreground: oklch(0.985 0 0);
+    --primary: oklch(0.922 0 0);
+    --primary-foreground: oklch(0.205 0 0);
+    --secondary: oklch(0.269 0 0);
+    --secondary-foreground: oklch(0.985 0 0);
+    --muted: oklch(0.269 0 0);
+    --muted-foreground: oklch(0.708 0 0);
+    --accent: oklch(0.269 0 0);
+    --accent-foreground: oklch(0.985 0 0);
+    --destructive: oklch(0.704 0.191 22.216);
+    --border: oklch(1 0 0 / 10%);
+    --input: oklch(1 0 0 / 15%);
+    --ring: oklch(0.556 0 0);
+    --chart-1: oklch(0.87 0 0);
+    --chart-2: oklch(0.556 0 0);
+    --chart-3: oklch(0.439 0 0);
+    --chart-4: oklch(0.371 0 0);
+    --chart-5: oklch(0.269 0 0);
+    --sidebar: oklch(0.205 0 0);
+    --sidebar-foreground: oklch(0.985 0 0);
+    --sidebar-primary: oklch(0.488 0.243 264.376);
+    --sidebar-primary-foreground: oklch(0.985 0 0);
+    --sidebar-accent: oklch(0.269 0 0);
+    --sidebar-accent-foreground: oklch(0.985 0 0);
+    --sidebar-border: oklch(1 0 0 / 10%);
+    --sidebar-ring: oklch(0.556 0 0);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+    }
+  /* Tailwind 4 donne aux boutons le curseur flèche ; la main signale partout un élément cliquable,
+     comme pour les liens. Les classes cursor-* (zoom sur les captures) restent prioritaires. */
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+  body {
+    @apply bg-background text-foreground;
+    }
+  html {
+    @apply font-sans;
+    }
+}
+
+/* Jetons du portfolio — valeurs reprises telles quelles de la maquette (artboard « Fiche d'implémentation »).
+   Les jetons shadcn sont réalignés ici pour que les composants suivent le design sans retouche. */
+
+@theme inline {
+  --font-mono: "Geist Mono Variable", ui-monospace, monospace;
+
+  /* La maquette laisse la hauteur de ligne au navigateur : on retire celles de Tailwind,
+     sinon chaque ligne de texte gagne 2 à 3 px et l'écart s'accumule le long de la page. */
+  --text-xs--line-height: normal;
+  --text-sm--line-height: normal;
+  --text-base--line-height: normal;
+  --text-lg--line-height: normal;
+  --text-xl--line-height: normal;
+  --text-2xl--line-height: normal;
+  --text-3xl--line-height: normal;
+
+  --color-brand: var(--brand);
+  --color-brand-tint: var(--brand-tint);
+  --color-brand-line: var(--brand-line);
+  --color-brand-text: var(--brand-text);
+  --color-surface-hover: var(--surface-hover);
+  --color-border-hover: var(--border-hover);
+  --color-code: var(--code-bg);
+  --color-code-foreground: var(--code-fg);
+  --color-easy: var(--easy);
+  --color-medium: var(--medium);
+  --color-hard: var(--hard);
+  --color-warn: var(--warn);
+  --color-warn-tint: var(--warn-tint);
+  --color-warn-line: var(--warn-line);
+}
+
+:root {
+  --background: #ffffff;
+  --foreground: #0a0a0a;
+  --card: #ffffff;
+  --card-foreground: #0a0a0a;
+  --popover: #ffffff;
+  --popover-foreground: #0a0a0a;
+  --primary: #171717;
+  --primary-foreground: #fafafa;
+  --secondary: #f5f5f5;
+  --secondary-foreground: #0a0a0a;
+  --muted: #f5f5f5;
+  /* #737373 dans la maquette, assombri pour 4,5:1 sur les fonds gris clair (#f5f5f5) */
+  --muted-foreground: #6e6e6e;
+  --accent: #f5f5f5;
+  --accent-foreground: #0a0a0a;
+  --border: #e5e5e5;
+  --input: #e5e5e5;
+  --ring: #a3a3a3;
+  --radius: 0.625rem;
+
+  /* propres au portfolio */
+  --brand: #3b6fe0;
+  --brand-tint: color-mix(in srgb, var(--brand) 9%, transparent);
+  --brand-line: color-mix(in srgb, var(--brand) 25%, transparent);
+  /* texte bleu : #3b6fe0 dans la maquette, assombri pour 4,5:1 sur le fond bleuté des pastilles */
+  --brand-text: #3767d1;
+  --surface-hover: #fafafa;
+  --border-hover: #d4d4d4;
+  /* Fond de la barre : assez opaque pour que les liens gris restent lisibles (contraste ≥ 4,5:1)
+     même au-dessus d'une zone noire, comme une capture d'écran sombre. */
+  --bg-blur: rgba(255, 255, 255, 0.98);
+  --code-bg: #fafafa;
+  --code-fg: #171717;
+  --easy: #16a34a;
+  --medium: #d97706;
+  --hard: #dc2626;
+  --warn: #b45309;
+  --warn-tint: rgba(180, 83, 9, 0.06);
+  --surlignage: rgba(250, 204, 21, 0.45);
+  --warn-line: rgba(180, 83, 9, 0.22);
+  --shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.04);
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 8px 24px -8px rgba(0, 0, 0, 0.18);
+}
+
+.dark {
+  --background: #0a0a0a;
+  --foreground: #fafafa;
+  /* Comme en thème clair, cartes et éléments flottants ont la couleur du fond : seuls leurs bords,
+     leurs ombres et le survol les distinguent (#171717 dans la maquette). */
+  --card: #0a0a0a;
+  --card-foreground: #fafafa;
+  --popover: #0a0a0a;
+  --popover-foreground: #fafafa;
+  --primary: #e5e5e5;
+  --primary-foreground: #171717;
+  --secondary: #262626;
+  --secondary-foreground: #fafafa;
+  --muted: #262626;
+  --muted-foreground: #a3a3a3;
+  --accent: #262626;
+  --accent-foreground: #fafafa;
+  --border: rgba(255, 255, 255, 0.1);
+  --input: rgba(255, 255, 255, 0.15);
+  --ring: #737373;
+
+  --brand-tint: color-mix(in srgb, var(--brand) 18%, transparent);
+  --brand-line: color-mix(in srgb, var(--brand) 35%, transparent);
+  --brand-text: color-mix(in srgb, var(--brand) 74%, #ffffff);
+  --surface-hover: rgba(255, 255, 255, 0.04);
+  --border-hover: rgba(255, 255, 255, 0.2);
+  /* Même règle au-dessus d'une zone blanche en thème sombre. */
+  --bg-blur: rgba(10, 10, 10, 0.96);
+  --code-bg: #141414;
+  --code-fg: #e5e5e5;
+  --easy: #4ade80;
+  --medium: #fbbf24;
+  --hard: #f87171;
+  --warn: #f5a524;
+  --warn-tint: rgba(245, 165, 36, 0.1);
+  --surlignage: rgba(250, 204, 21, 0.3);
+  --warn-line: rgba(245, 165, 36, 0.28);
+  --shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.35);
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 6px 20px -6px rgba(0, 0, 0, 0.6);
+}
+
+/* Feuille d'impression : « Télécharger en PDF » appelle l'impression du navigateur. */
+/* Les contrôles de la maquette (boutons, champs, pastilles) gardent le box-sizing par
+   défaut : leur bordure s'ajoute à la hauteur déclarée. On reproduit ce modèle plutôt que
+   d'écrire « 34px » là où la maquette dit 32. */
+.controle {
+  box-sizing: content-box;
+}
+
+@media (min-width: 48rem) {
+  .controle-desktop {
+    box-sizing: content-box;
+  }
+}
+
+/* Coloration syntaxique : Shiki fournit les deux palettes en variables, on choisit selon le
+   thème. Le fond reste celui de la maquette (--code-bg), pas celui du thème Shiki. */
+.astro-code {
+  background: transparent !important;
+}
+.astro-code span {
+  color: var(--shiki-light);
+}
+.dark .astro-code span {
+  color: var(--shiki-dark);
+}
+
+/* Mode lecture : une seule colonne de 680 px, centrée, comme la maquette. Le minmax(0, 1fr)
+   est indispensable : sans lui, la colonne s'élargit jusqu'à la plus longue ligne de code.
+   Sur un écran étroit, la colonne cède 56 px de chaque côté pour la croix de sortie. */
+@media (min-width: 48rem) {
+  .mode-lecture [data-doc-grille] {
+    grid-template-columns: minmax(0, 1fr);
+    width: 100%;
+    max-width: min(680px, 100% - 112px);
+    margin-inline: auto;
+  }
+  .mode-lecture [data-doc-entete] {
+    width: 100%;
+    max-width: min(680px, 100% - 112px);
+    margin-inline: auto;
+  }
+  .mode-lecture [data-doc-colonne] {
+    display: none;
+  }
+}
+
+/* Halo bleu diffus en haut de chaque page, plus marqué en thème sombre (dégradé, sans animation).
+   Son début est caché sous la barre de navigation ; sans barre (mode lecture), il remonte de la
+   hauteur de la barre pour que la portion visible reste la même. Sur mobile, l'ellipse fait 90 % de
+   la largeur de l'écran, plus que le rapport d'ordinateur (900 px pour 1 280, soit 70 %) ;
+   elle descend aussi bas et garde la même intensité. Avec ses 900 px fixes, on n'en verrait que le
+   milieu, une bande uniforme d'un bord à l'autre. */
+body {
+  --halo: color-mix(in srgb, var(--brand) 10%, transparent);
+  --halo-largeur: 90vw;
+  --halo-hauteur: 380px;
+  --halo-centre: -140px;
+  --barre: 57px;
+  --sans-barre: 0px;
+  background-image: radial-gradient(
+    var(--halo-largeur) var(--halo-hauteur) at 50% calc(var(--halo-centre) - var(--sans-barre)),
+    var(--halo),
+    transparent 70%
+  );
+  background-repeat: no-repeat;
+}
+.dark body {
+  --halo: color-mix(in srgb, var(--brand) 26%, transparent);
+  --halo-hauteur: 420px;
+}
+@media (min-width: 48rem) {
+  body {
+    --halo-largeur: 900px;
+    --barre: 59px;
+  }
+}
+.mode-lecture body {
+  --sans-barre: var(--barre);
+}
+
+/* Fond de la barre de navigation : flouté, de la même opacité sur toute la hauteur de la barre, sans
+   filet ; il déborde ensuite de 20 px sous la barre en s'estompant, pour une transition douce avec
+   le contenu qui défile. Ces 20 px ne recouvrent que la marge du haut des pages (24 px au minimum) :
+   en haut de page, aucun contenu n'est voilé. */
+.barre-fond::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 -20px 0;
+  z-index: -1;
+  background: var(--bg-blur);
+  backdrop-filter: blur(8px);
+  mask-image: linear-gradient(to bottom, #000 calc(100% - 20px), transparent);
+  pointer-events: none;
+}
+
+/* Contenu Markdown des notes et write-ups (voir src/lib/markdown.mjs). Les sections, blocs de
+   code et captures reprennent déjà les classes de la page de lecture ; ici, le reste du texte,
+   aligné sur la maquette : texte courant 15 px, interligne 1,75, gris atténué. */
+.prose-doc :is(p, ul, ol, blockquote) {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.75;
+  color: var(--muted-foreground);
+}
+.prose-doc strong {
+  font-weight: 500;
+  color: var(--foreground);
+}
+.prose-doc h3 {
+  margin: 8px 0 0;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--foreground);
+}
+.prose-doc h4 {
+  margin: 4px 0 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--foreground);
+}
+.prose-doc :is(h3, h4) {
+  scroll-margin-top: 88px;
+}
+@media (min-width: 48rem) {
+  .prose-doc h3 {
+    font-size: 17px;
+  }
+  .prose-doc :is(h3, h4) {
+    scroll-margin-top: 96px;
+  }
+}
+
+/* Liens */
+.prose-doc a:not([data-ancre], [data-footnote-backref]) {
+  color: var(--brand-text);
+  text-decoration: underline;
+  text-decoration-color: var(--brand-line);
+  text-underline-offset: 3px;
+  transition: text-decoration-color 120ms ease;
+}
+.prose-doc a:not([data-ancre]):hover {
+  text-decoration-color: var(--brand-text);
+}
+
+/* Code en ligne */
+.prose-doc :not(pre) > code {
+  padding: 1px 5px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  background: var(--muted);
+  font-family: "Geist Mono Variable", ui-monospace, monospace;
+  font-size: 0.85em;
+  color: var(--foreground);
+  overflow-wrap: anywhere;
+}
+.prose-doc code.code-court {
+  white-space: nowrap;
+}
+
+/* Listes */
+.prose-doc :is(ul, ol) {
+  padding-left: 1.35em;
+}
+.prose-doc ul {
+  list-style: disc;
+}
+.prose-doc ol {
+  list-style: decimal;
+}
+.prose-doc li + li,
+.prose-doc li > :is(ul, ol) {
+  margin-top: 4px;
+}
+.prose-doc li::marker {
+  color: var(--muted-foreground);
+}
+.prose-doc ul.contains-task-list {
+  padding-left: 0;
+  list-style: none;
+}
+/* Cases dessinées à la main : le navigateur grise les cases non modifiables, la coche devient illisible. */
+.prose-doc .task-list-item input {
+  appearance: none;
+  width: 15px;
+  height: 15px;
+  margin: 0 8px 0 0;
+  vertical-align: -2px;
+  border: 1px solid var(--border-hover);
+  border-radius: 4px;
+  background: var(--card);
+}
+.prose-doc .task-list-item input:checked {
+  border-color: var(--brand);
+  background: var(--brand)
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6 9 17l-5-5'/%3E%3C/svg%3E")
+    center / 11px no-repeat;
+}
+
+/* Citation (les encadrés Obsidian sont traités à part) */
+.prose-doc blockquote {
+  padding-left: 16px;
+  border-left: 2px solid var(--border);
+}
+.prose-doc blockquote > * + * {
+  margin-top: 8px;
+}
+
+/* Tableaux : défilement horizontal dans leur cadre sur petit écran */
+.prose-doc .tableau {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+.prose-doc table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  line-height: 1.6;
+}
+.prose-doc th {
+  padding: 9px 14px;
+  background: var(--muted);
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  font-weight: 500;
+  color: var(--foreground);
+  white-space: nowrap;
+}
+.prose-doc td {
+  padding: 9px 14px;
+  vertical-align: top;
+  color: var(--muted-foreground);
+}
+.prose-doc tr + tr td {
+  border-top: 1px solid var(--border);
+}
+
+/* Encadrés Obsidian : > [!warning], > [!tip], > [!note], > [!danger]… */
+.prose-doc .callout {
+  display: flex;
+  gap: 10px;
+  padding: 14px 16px;
+  border: 1px solid var(--brand-line);
+  border-radius: 10px;
+  background: var(--brand-tint);
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--foreground);
+}
+.prose-doc .callout-icone {
+  flex-shrink: 0;
+  margin-top: 3px;
+  color: var(--brand);
+}
+.prose-doc .callout-corps {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 8px;
+}
+.prose-doc .callout-corps :is(p, ul, ol) {
+  font-size: inherit;
+  line-height: inherit;
+  color: inherit;
+}
+.prose-doc .callout-titre {
+  font-weight: 600;
+}
+.prose-doc .callout[data-callout="attention"] {
+  border-color: var(--warn-line);
+  background: var(--warn-tint);
+}
+.prose-doc .callout[data-callout="attention"] .callout-icone {
+  color: var(--warn);
+}
+.prose-doc .callout[data-callout="conseil"] {
+  border-color: color-mix(in oklab, var(--easy) 32%, transparent);
+  background: color-mix(in oklab, var(--easy) 9%, transparent);
+}
+.prose-doc .callout[data-callout="conseil"] .callout-icone {
+  color: var(--easy);
+}
+.prose-doc .callout[data-callout="danger"] {
+  border-color: color-mix(in oklab, var(--hard) 32%, transparent);
+  background: color-mix(in oklab, var(--hard) 8%, transparent);
+}
+.prose-doc .callout[data-callout="danger"] .callout-icone {
+  color: var(--hard);
+}
+@media (min-width: 48rem) {
+  .prose-doc .callout {
+    gap: 12px;
+    padding: 16px 18px;
+  }
+}
+
+/* Surlignage Obsidian (==texte==), texte barré, séparateur */
+.prose-doc mark {
+  padding: 0 2px;
+  border-radius: 3px;
+  background: var(--surlignage);
+  color: var(--foreground);
+}
+.prose-doc del {
+  color: var(--muted-foreground);
+}
+.prose-doc hr {
+  width: 100%;
+  margin: 8px 0;
+  border: 0;
+  border-top: 1px solid var(--border);
+}
+
+/* Notes de bas de page : appel entre crochets, lisible dans le texte */
+.prose-doc sup {
+  vertical-align: 0.35em;
+  font-size: 0.8em;
+  line-height: 0;
+}
+.prose-doc a[data-footnote-ref] {
+  text-decoration: none;
+  font-weight: 500;
+}
+.prose-doc a[data-footnote-ref]::before {
+  content: "[";
+}
+.prose-doc a[data-footnote-ref]::after {
+  content: "]";
+}
+/* Toute cible de lien dans le texte (appel de note, note, sous-titre) s'arrête sous la barre du haut */
+.prose-doc [id] {
+  scroll-margin-top: 88px;
+}
+@media (min-width: 48rem) {
+  .prose-doc [id] {
+    scroll-margin-top: 96px;
+  }
+}
+.prose-doc [data-footnotes] {
+  margin-top: 8px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+.prose-doc [data-footnotes] :is(ol, p) {
+  font-size: 13px;
+  line-height: 1.6;
+}
+.prose-doc [data-footnote-backref] {
+  margin-left: 4px;
+  color: var(--muted-foreground);
+  text-decoration: none;
+}
+
+/* Réglage système « réduire les animations » : ni défilement doux, ni transition, ni animation.
+   Les défilements lancés en JavaScript demandent eux-mêmes « instant » (voir DocPage). */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto !important;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Focus clavier bien visible : contour bleu de 2 px, décalé de l'élément. Les champs de saisie
+   gardent l'anneau de leur cadre (focus-within), d'où leur exclusion. */
+:is(a, button, summary, [tabindex]:not([tabindex="-1"])):focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
+
+/* Impression : page sans marge, pour que le navigateur n'ait plus de place où écrire ses en-têtes et
+   pieds de page (date, titre, adresse, numéro de page). La marge est remise à l'intérieur, sur le
+   corps de la page, et répétée en haut et en bas de chaque feuille (box-decoration-break). */
+@page {
+  margin: 0;
+}
+
+@media print {
+  body {
+    padding: 12mm 14mm;
+    -webkit-box-decoration-break: clone;
+    box-decoration-break: clone;
+  }
+
+  [data-no-print] {
+    display: none !important;
+  }
+
+  [data-doc-page] > div {
+    max-width: none !important;
+    padding: 0 !important;
+  }
+
+  [data-doc-grille] {
+    display: block !important;
+  }
+
+  /* Coupures de page : une section peut se couper (sinon de grands blancs), mais pas un bloc de
+     code, un encadré, une figure, une ligne de tableau ou le résumé ; un intertitre reste avec
+     ce qui le suit, et un paragraphe ne laisse pas une ligne isolée en haut ou en bas de page. */
+  [data-doc-page] :is(h2, h3) {
+    break-after: avoid;
+    break-inside: avoid;
+  }
+  /* Un intertitre réserve sous lui la place de quelques lignes (pseudo-élément insécable, annulé par
+     une marge négative) : s'il ne reste pas cette place en bas de page, il passe à la page suivante.
+     Plus fiable que break-after, que tous les navigateurs n'appliquent pas. */
+  [data-doc-page] :is(h2, h3)::after {
+    content: "";
+    display: block;
+    height: 4.5em;
+    margin-bottom: -4.5em;
+  }
+  [data-doc-page] :is(.overflow-hidden:has(pre), .callout, .bg-warn-tint, .bg-brand-tint, figure, tr) {
+    break-inside: avoid;
+  }
+  [data-doc-page] p {
+    orphans: 3;
+    widows: 3;
+  }
+
+  /* Cadre des tableaux et des blocs de code un peu plus épais sur papier : un filet d'un pixel
+     disparaît parfois selon le lecteur de PDF et le niveau de zoom. 2 px, car Chrome arrondit
+     l'épaisseur des bordures au pixel entier inférieur (1,5 px redeviendrait 1 px). */
+  [data-doc-page] :is(.tableau, .overflow-hidden:has(pre)) {
+    border-width: 2px;
+  }
+  /* Même épaisseur pour les séparations internes : entre les lignes d'un tableau, sous son
+     en-tête, et sous l'en-tête (nom du fichier) d'un bloc de code. */
+  .prose-doc th {
+    border-bottom-width: 2px;
+  }
+  .prose-doc tr + tr td {
+    border-top-width: 2px;
+  }
+  [data-doc-page] .overflow-hidden:has(pre) > :first-child {
+    border-bottom-width: 2px;
+  }
+
+  /* Origine du document, en fin de document */
+  [data-origine] {
+    display: block !important;
+  }
+
+  /* Liens externes : l'adresse apparaît entre parenthèses, puisqu'on ne peut pas cliquer sur papier. */
+  [data-doc-page] a[href^="http"]::after {
+    content: " (" attr(href) ")";
+    font-size: 0.85em;
+    font-weight: 400;
+    color: var(--muted-foreground);
+    overflow-wrap: anywhere;
+  }
+
+  /* Blocs de code : passage à la ligne plutôt que défilement horizontal, sinon la fin des
+     lignes longues est perdue sur papier. */
+  [data-doc-page] .overflow-x-auto {
+    overflow: visible !important;
+  }
+  [data-doc-page] pre {
+    white-space: pre-wrap !important;
+    overflow-wrap: anywhere;
+  }
+
+  /* Le navigateur n'imprime pas les fonds par défaut ; on les garde pour les petits éléments
+     dont le fond porte le sens : badges, résumé, encadrés, pastilles de difficulté, surlignage. */
+  .bg-brand-tint,
+  .bg-warn-tint,
+  .bg-easy,
+  .bg-medium,
+  .bg-hard,
+  .prose-doc .callout,
+  .prose-doc mark {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* Boutons sans usage sur papier */
+  [data-copier] {
+    display: none !important;
+  }
+}

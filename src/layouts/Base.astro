@@ -1,0 +1,79 @@
+---
+import "../styles/global.css";
+import Header from "../components/Header.astro";
+import CommandPalette from "../components/CommandPalette";
+import { adresseImage, apercuDe } from "../lib/apercus";
+
+interface Props {
+  title: string;
+  description?: string;
+  active?: "home" | "writeups" | "notes" | "projects" | "none";
+}
+
+const {
+  title,
+  description = "Write-ups, notes et projets de dbrlucas, étudiant en Cybersécurité.",
+  active = "none"
+} = Astro.props;
+
+// Aperçu de partage : adresse canonique et image générée au build (src/pages/og/).
+const apercu = await apercuDe(Astro.url.pathname);
+// La page 404 est servie à n'importe quelle adresse inconnue : pas d'adresse canonique pour elle.
+const pageErreur = /^\/404\/?$/.test(Astro.url.pathname);
+const canonique = new URL(Astro.url.pathname, Astro.site);
+const image = new URL(adresseImage(apercu), Astro.site);
+---
+
+<!doctype html>
+<html lang="fr" class="scroll-smooth dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content={description} />
+    <title>{title}</title>
+    {!pageErreur && <link rel="canonical" href={canonique} />}
+    <meta property="og:site_name" content="dbrlucas" />
+    <meta property="og:locale" content="fr_FR" />
+    <meta property="og:type" content={apercu.article ? "article" : "website"} />
+    {!pageErreur && <meta property="og:url" content={canonique} />}
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:image" content={image} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content={`${apercu.rubrique} : ${apercu.titre}`} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="alternate" type="application/rss+xml" title="dbrlucas | Write-ups et notes" href="/rss.xml" />
+    <!-- Favicon : suit le thème choisi sur le site (portrait clair ou sombre), voir le script ci-dessous
+         et le bouton de thème dans Header.astro. -->
+    <link rel="icon" data-favicon href="/favicon-sombre.png" type="image/png" sizes="64x64" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="sitemap" href="/sitemap-index.xml" />
+    <script is:inline>
+      // Thème sombre par défaut (classe « dark » posée sur <html>), quel que soit le réglage de l'appareil.
+      // Seul un choix du thème clair, mémorisé par le bouton de thème, le remplace : on l'applique, avec le
+      // favicon assorti, avant le premier rendu pour éviter le clignotement.
+      (function () {
+        try {
+          if (localStorage.getItem("theme") !== "light") return;
+          document.documentElement.classList.remove("dark");
+          document.querySelector("link[data-favicon]").href = "/favicon-clair.png";
+        } catch (e) {}
+      })();
+    </script>
+  </head>
+  <body class="bg-background text-foreground font-sans text-sm antialiased">
+    <a
+      href="#contenu"
+      class="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-50 focus:rounded-md focus:border focus:bg-card focus:px-3 focus:py-2 focus:text-sm"
+      >Aller au contenu</a
+    >
+    <Header active={active} />
+    <main id="contenu">
+      <slot />
+    </main>
+    <!-- Annonces pour les lecteurs d'écran (copie, nombre de résultats…) : src/lib/annonce.ts -->
+    <div id="annonces" aria-live="polite" aria-atomic="true" class="sr-only"></div>
+    <CommandPalette client:idle />
+  </body>
+</html>

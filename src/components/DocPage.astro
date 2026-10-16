@@ -1,0 +1,565 @@
+---
+import { Code } from "astro:components";
+import {
+  ArrowLeft,
+  ArrowRight,
+  ArrowUpRight,
+  Check,
+  ChevronDown,
+  CornerDownRight,
+  Download,
+  Link as IconeLien,
+  PanelLeft,
+  TriangleAlert,
+  X
+} from "@lucide/astro";
+import type { DocumentRendu } from "../lib/documents";
+import { hrefDossier, slug } from "../lib/contenu";
+import { themeCodeClair, themeCodeSombre } from "../lib/theme-code.mjs";
+
+interface Props {
+  doc: DocumentRendu;
+  /** Sommaire d'une note Markdown (ses titres de niveau 2) ; sinon, celui des sections. */
+  sommaire?: { label: string; id: string }[];
+}
+const { doc } = Astro.props;
+/** Une note Markdown arrive par le slot, déjà mise en forme par src/lib/markdown.mjs. */
+const markdown = Astro.slots.has("default");
+const dansLesNotes = doc.root === "Notes";
+const pastille = { Easy: "bg-easy", Medium: "bg-medium", Hard: "bg-hard" } as const;
+const pilule = "inline-flex items-center whitespace-nowrap rounded-full px-2 py-0.5 font-mono text-xs";
+const emplacement = dansLesNotes ? ["Notes", ...doc.crumbs] : [];
+/** « Lien vers le challenge HackTheBox » (write-up) ou « Lien vers la source TryHackMe » (note) ;
+    sans plateforme de challenge (lab perso), la plateforme est omise. */
+const plateformeLien = doc.platform && doc.platform !== "Lab perso" ? ` ${doc.platform}` : "";
+const libelleLien = `Lien vers ${dansLesNotes ? "la source" : "le challenge"}${plateformeLien}`;
+/** Origine du document, en fin de version imprimée : « Source : dbrlucas | dbrlucas.github.io/write-ups/… ». */
+const origine = `Source : dbrlucas | ${Astro.site?.host ?? ""}${Astro.url.pathname.replace(/\/$/, "")}`;
+
+/** Identifiants de section lisibles dans l'URL (#collecte-avec-sysmon), sans doublon. */
+const vus = new Map<string, number>();
+const ids = doc.sections.map((s) => {
+  const base = slug(s.label) || "section";
+  const n = (vus.get(base) ?? 0) + 1;
+  vus.set(base, n);
+  return n === 1 ? base : `${base}-${n}`;
+});
+const sommaire = Astro.props.sommaire ?? doc.sections.map((s, i) => ({ label: s.label, id: ids[i] }));
+
+/** Langage de coloration déduit de l'extension du fichier affiché au-dessus du bloc. */
+const LANGAGES: Record<string, string> = {
+  sh: "shellsession",
+  bash: "shellsession",
+  ps1: "powershell",
+  yml: "yaml",
+  yaml: "yaml",
+  json: "json",
+  py: "python",
+  xml: "xml",
+  sql: "sql"
+};
+const langage = (fichier?: string) => LANGAGES[fichier?.split(".").pop()?.toLowerCase() ?? ""] ?? "plaintext";
+---
+
+<div data-doc-page class="flex justify-center">
+  <div data-pagefind-body class="flex w-full max-w-[920px] flex-col gap-5 px-5 pt-6 pb-6 md:gap-7 md:pt-12 md:pb-12">
+    <!-- Croix de sortie du mode lecture, alignée sur la première ligne du titre, 20 px à droite de
+         la colonne de lecture (même largeur que dans global.css). -->
+    <div
+      data-sortie-lecture
+      hidden
+      data-no-print
+      data-pagefind-ignore
+      class="sticky top-4 z-10 mx-auto -mb-7 hidden h-0 w-full max-w-[min(680px,100%_-_112px)] justify-end md:flex"
+    >
+      <button
+        type="button"
+        data-quitter-lecture
+        aria-label="Quitter le mode lecture"
+        class="mt-1 -mr-[52px] flex size-8 shrink-0 items-center justify-center rounded-lg border border-border bg-card shadow-[var(--shadow-sm)] transition-colors hover:bg-muted"
+      >
+        <X size={14} />
+      </button>
+    </div>
+
+    <header data-doc-entete class="flex flex-col gap-3 md:gap-3.5">
+      <h1 class="m-0 text-[26px] leading-[1.2] font-semibold tracking-[-0.03em] md:text-[34px] md:leading-[1.15]">
+        {doc.titre}
+      </h1>
+      <div class="flex flex-wrap items-center gap-1.5 md:gap-2">
+        <span class={`${pilule} border border-brand-line bg-brand-tint text-brand-text`}>{doc.badge}</span>
+        <span class={`${pilule} border border-border text-muted-foreground`}>{doc.platform}</span>
+        <div class="flex shrink-0 items-center gap-1.5 md:gap-2">
+          {
+            doc.diff && (
+              <span class={`${pilule} gap-[5px] border border-border text-muted-foreground`}>
+                <span class={`size-1.5 shrink-0 rounded-full ${pastille[doc.diff as keyof typeof pastille]}`} />
+                {doc.diff}
+              </span>
+            )
+          }
+          <span class="font-mono text-xs text-muted-foreground">{doc.meta}</span>
+        </div>
+        {/* Repère de travail : les brouillons n'existent pas dans le site construit. */}
+        {doc.brouillon && <span data-no-print class={`${pilule} border border-warn-line bg-warn-tint text-warn`}>Brouillon</span>}
+      </div>
+    </header>
+
+    <!-- Sommaire dépliable et bouton PDF : version mobile -->
+    <div data-no-print data-pagefind-ignore class="flex items-start gap-2 md:hidden">
+      <div class="flex min-w-0 flex-1 flex-col overflow-hidden rounded-[10px] border border-border">
+        <button
+          type="button"
+          data-toc-toggle
+          aria-expanded="false"
+          class="flex h-[42px] items-center justify-between px-3.5 text-sm font-medium"
+        >
+          Sommaire
+          <ChevronDown size={14} class="text-muted-foreground transition-transform" data-toc-chevron />
+        </button>
+        <div data-toc-mobile hidden class="flex flex-col border-t border-border p-1">
+          {
+            sommaire.map((s, i) => (
+              <button
+                type="button"
+                data-toc-lien={i}
+                class="flex min-h-11 items-center rounded-lg px-2.5 text-left text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              >
+                {s.label}
+              </button>
+            ))
+          }
+        </div>
+      </div>
+      <button
+        type="button"
+        data-imprimer
+        aria-label="Télécharger en PDF"
+        class="flex size-11 shrink-0 items-center justify-center rounded-[10px] border border-border transition-colors hover:bg-muted"
+      >
+        <Download size={20} />
+      </button>
+    </div>
+
+    <div data-doc-grille class="md:grid md:grid-cols-[minmax(0,1fr)_196px] md:items-start md:gap-12">
+      <!-- Article -->
+      <article class="flex flex-col gap-5 md:gap-[30px]">
+        <div class="rounded-[10px] bg-brand-tint p-4 md:px-5 md:py-[18px]">
+          <p class="m-0 text-sm leading-[1.7]">
+            {doc.summary}
+            {
+              doc.lien && (
+                <>
+                  {" "}
+                  {/* Bloc insécable : à la suite du résumé s'il tient sur la ligne, sinon entier à la ligne. */}
+                  <a
+                    href={doc.lien}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    data-pagefind-ignore
+                    class="inline-block font-medium whitespace-nowrap text-brand-text underline decoration-brand-line underline-offset-[3px] transition-colors hover:decoration-brand-text"
+                  >
+                    {libelleLien}
+                    <ArrowUpRight size={13} class="ml-0.5 inline-block align-[-1px]" />
+                    <span class="sr-only">(s'ouvre dans un nouvel onglet)</span>
+                  </a>
+                </>
+              )
+            }
+          </p>
+        </div>
+
+        {
+          markdown ? (
+            <div class="prose-doc contents">
+              <slot />
+            </div>
+          ) : (
+          doc.sections.map((s, i) => (
+            <section data-doc-section class="flex scroll-mt-[88px] flex-col gap-3 md:scroll-mt-24 md:gap-3.5">
+              <h2 id={ids[i]} class="group m-0 scroll-mt-[88px] text-lg font-semibold tracking-[-0.02em] md:scroll-mt-24 md:text-xl">
+                {s.label}
+                <a
+                  href={`#${ids[i]}`}
+                  data-ancre
+                  data-no-print
+                  data-pagefind-ignore
+                  aria-label={`Copier le lien vers la section « ${s.label} »`}
+                  title="Copier le lien de cette section"
+                  class="-my-1 ml-1 inline-flex translate-y-[2px] rounded-md p-1 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 hover:text-brand-text focus-visible:opacity-100 [@media(hover:none)]:opacity-60"
+                >
+                  <IconeLien size={16} data-icone-lien />
+                  <Check size={16} class="hidden text-brand-text" data-icone-copie />
+                </a>
+              </h2>
+
+              {s.body && <p class="m-0 text-[15px] leading-[1.75] text-muted-foreground">{s.body}</p>}
+
+              {s.defs && (
+                <div class="flex flex-col gap-3">
+                  {s.defs.map((d) => (
+                    <p class="m-0 text-[15px] leading-[1.75] text-muted-foreground">
+                      <strong class="font-medium text-foreground">{d.term}</strong> — {d.text}
+                    </p>
+                  ))}
+                </div>
+              )}
+
+              {s.code && (
+                <div class="overflow-hidden rounded-[10px] border border-border">
+                  <div class="flex items-center justify-between border-b border-border bg-muted px-3 py-2 md:px-3.5">
+                    <span class="font-mono text-[11px] text-muted-foreground">{s.codeFile}</span>
+                    <button
+                      type="button"
+                      data-copier
+                      data-pagefind-ignore
+                      class="font-mono text-[11px] text-muted-foreground transition-colors hover:text-brand-text"
+                    >
+                      Copier
+                    </button>
+                  </div>
+                  <div class="overflow-x-auto bg-code p-3 md:p-3.5">
+                    <Code
+                      code={s.code}
+                      lang={langage(s.codeFile) as any}
+                      themes={{ light: themeCodeClair, dark: themeCodeSombre }}
+                      defaultColor={false}
+                      wrap={null}
+                      class="m-0 font-mono text-xs leading-[1.8] whitespace-pre text-code-foreground md:text-[12.5px]"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {s.callout && (
+                <div class="flex gap-2.5 rounded-[10px] border border-warn-line bg-warn-tint px-4 py-[14px] md:gap-3 md:px-[18px] md:py-4">
+                  <TriangleAlert size={16} class="mt-0.5 shrink-0 text-warn" />
+                  <p class="m-0 text-sm leading-[1.7]">{s.callout}</p>
+                </div>
+              )}
+            </section>
+          ))
+          )
+        }
+
+        <p data-origine data-pagefind-ignore class="m-0 hidden border-t border-border pt-2 text-[11px] break-all text-muted-foreground">
+          {origine}
+        </p>
+
+        {
+          (doc.precedent || doc.suivant) && (
+            <nav
+              data-no-print
+              data-pagefind-ignore
+              aria-label="Documents voisins"
+              class:list={["mt-2 grid gap-3", doc.precedent && doc.suivant && "md:grid-cols-2"]}
+            >
+              {doc.precedent && (
+                <a
+                  href={doc.precedent.href}
+                  class="flex items-center gap-3 rounded-[14px] border border-border bg-card p-4 shadow-[var(--shadow-sm)] transition-colors hover:border-border-hover hover:bg-surface-hover md:px-5 md:py-[18px]"
+                >
+                  <ArrowLeft size={16} class="shrink-0 text-muted-foreground" />
+                  <span class="flex min-w-0 flex-col gap-1">
+                    <span class="text-xs text-muted-foreground">{doc.precedent.label}</span>
+                    <span class="text-[15px] font-medium tracking-[-0.01em]">{doc.precedent.titre}</span>
+                  </span>
+                </a>
+              )}
+              {doc.suivant && (
+                <a
+                  href={doc.suivant.href}
+                  class:list={[
+                    "flex items-center justify-between gap-3 rounded-[14px] border border-border bg-card p-4 shadow-[var(--shadow-sm)] transition-colors hover:border-border-hover hover:bg-surface-hover md:px-5 md:py-[18px]",
+                    doc.precedent && "md:col-start-2 md:text-right"
+                  ]}
+                >
+                  <span class="flex min-w-0 flex-1 flex-col gap-1">
+                    <span class="text-xs text-muted-foreground">{doc.suivant.label}</span>
+                    <span class="text-[15px] font-medium tracking-[-0.01em]">{doc.suivant.titre}</span>
+                  </span>
+                  <ArrowRight size={16} class="shrink-0 text-muted-foreground" />
+                </a>
+              )}
+            </nav>
+          )
+        }
+      </article>
+
+      <!-- Colonne de droite : sommaire, emplacement, actions -->
+      <aside data-doc-colonne data-no-print data-pagefind-ignore class="sticky top-[72px] hidden flex-col gap-2.5 md:flex">
+        <span class="px-2.5 text-[11px] font-medium tracking-[0.06em] text-muted-foreground uppercase">Sommaire</span>
+        <div class="flex flex-col gap-px">
+          {/* La partie en cours ne change que de couleur : une graisse plus forte élargirait le texte et
+               ferait passer certains titres à la ligne. */}
+          {
+            sommaire.map((s, i) => (
+              <button
+                type="button"
+                data-toc-lien={i}
+                class="flex min-h-[34px] cursor-pointer items-center rounded-lg px-2.5 py-1.5 text-left text-[13px] text-muted-foreground transition-colors hover:bg-muted hover:text-foreground aria-[current=true]:bg-brand-tint aria-[current=true]:text-brand-text"
+              >
+                {s.label}
+              </button>
+            ))
+          }
+        </div>
+
+        {
+          dansLesNotes && (
+            <div class="mt-3.5 flex flex-col gap-2.5 border-t border-border pt-3.5">
+              <span class="px-2.5 text-[11px] font-medium tracking-[0.06em] text-muted-foreground uppercase">
+                Emplacement
+              </span>
+              <div class="flex flex-col gap-px">
+                {emplacement.map((niveau, i) => (
+                  <a
+                    href={hrefDossier(doc.crumbs.slice(0, i))}
+                    class="flex min-w-0 items-center gap-1.5 min-h-[34px] rounded-lg px-2.5 py-1.5 text-[13px] text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                  >
+                    {i > 0 && <CornerDownRight size={14} class="shrink-0" />}
+                    <span class="truncate">{niveau}</span>
+                  </a>
+                ))}
+              </div>
+            </div>
+          )
+        }
+
+        <div class="mt-3.5 flex flex-col gap-1 border-t border-border pt-3.5">
+          <button
+            type="button"
+            data-imprimer
+            class="flex items-center gap-2 min-h-[34px] rounded-lg px-2.5 py-1.5 text-left text-[13px] text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+          >
+            <Download size={14} />
+            Télécharger en PDF
+          </button>
+          <button
+            type="button"
+            data-mode-lecture
+            class="flex items-center gap-2 min-h-[34px] rounded-lg px-2.5 py-1.5 text-left text-[13px] text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+          >
+            <PanelLeft size={14} />
+            Mode lecture
+          </button>
+        </div>
+      </aside>
+    </div>
+  </div>
+</div>
+
+<!-- Visionneuse des captures : ajustée à l'écran, puis taille réelle au clic si elle a été réduite -->
+<dialog
+  data-zoom
+  data-no-print
+  data-pagefind-ignore
+  aria-label="Capture agrandie"
+  class="m-0 h-dvh max-h-none w-screen max-w-none border-0 bg-transparent p-0 backdrop:bg-black/90 backdrop:backdrop-blur-sm"
+>
+  <div data-zoom-cadre class="flex h-full w-full overflow-auto p-4 md:p-10">
+    <img data-zoom-image alt="" class="m-auto block h-auto max-h-[calc(100dvh-5rem)] max-w-full" />
+  </div>
+  <button
+    type="button"
+    data-zoom-fermer
+    aria-label="Fermer la capture"
+    class="fixed top-3 right-3 flex size-11 items-center justify-center rounded-[10px] border border-border bg-card text-foreground shadow-[var(--shadow-sm)] transition-colors hover:bg-muted md:top-4 md:right-4 md:size-8 md:rounded-lg"
+  >
+    <X size={20} class="size-5 md:size-4" />
+  </button>
+</dialog>
+
+<script>
+  import { annoncer } from "../lib/annonce";
+
+  const sections = [...document.querySelectorAll<HTMLElement>("[data-doc-section]")];
+  const liens = [...document.querySelectorAll<HTMLElement>("[data-toc-lien]")];
+  const tocMobile = document.querySelector<HTMLElement>("[data-toc-mobile]");
+  const tocBouton = document.querySelector<HTMLButtonElement>("[data-toc-toggle]");
+  const chevron = document.querySelector<HTMLElement>("[data-toc-chevron]");
+
+  let verrou = 0;
+
+  /** Défilement doux, sauf si le système demande de réduire les animations. */
+  const defilement = (): ScrollBehavior =>
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth";
+
+  const marquer = (index: number) => {
+    liens.forEach((l) => {
+      const actif = Number(l.dataset.tocLien) === index;
+      if (actif) l.setAttribute("aria-current", "true");
+      else l.removeAttribute("aria-current");
+    });
+  };
+
+  // Sommaire : défilement doux, puis suivi automatique au défilement.
+  liens.forEach((lien) =>
+    lien.addEventListener("click", () => {
+      const index = Number(lien.dataset.tocLien);
+      marquer(index);
+      verrou = Date.now() + 900;
+      if (tocMobile && !tocMobile.hidden) tocBouton?.click();
+      setTimeout(() => sections[index]?.scrollIntoView({ behavior: defilement(), block: "start" }), 30);
+    })
+  );
+
+  const suivre = () => {
+    if (!sections.length) return;
+    const maintenant = Date.now();
+    if (verrou && maintenant < verrou) {
+      verrou = Math.max(verrou, maintenant + 150);
+      return;
+    }
+    const ligne = window.innerWidth >= 768 ? 96 : 88;
+    let actif = 0;
+    sections.forEach((s, i) => {
+      if (s.getBoundingClientRect().top <= ligne) actif = i;
+    });
+    if (window.scrollY > 0 && window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 2) {
+      actif = sections.length - 1;
+    }
+    marquer(actif);
+  };
+  window.addEventListener("scroll", suivre, { passive: true });
+  suivre();
+
+  // Sommaire mobile : dépliage
+  tocBouton?.addEventListener("click", () => {
+    if (!tocMobile) return;
+    const ouvert = tocMobile.hidden;
+    tocMobile.hidden = !ouvert;
+    tocBouton.setAttribute("aria-expanded", String(ouvert));
+    chevron?.classList.toggle("rotate-180", ouvert);
+  });
+
+  // Copier un bloc de code
+  document.querySelectorAll<HTMLButtonElement>("[data-copier]").forEach((b) =>
+    b.addEventListener("click", async () => {
+      const code = b.closest("div")?.parentElement?.querySelector("pre")?.textContent ?? "";
+      try {
+        await navigator.clipboard.writeText(code);
+      } catch (e) {}
+      b.textContent = "Copié";
+      annoncer("Code copié dans le presse-papiers");
+      setTimeout(() => (b.textContent = "Copier"), 1600);
+    })
+  );
+
+  // Lien d'ancre d'un titre : met l'adresse de la section dans la barre et le presse-papiers
+  document.querySelectorAll<HTMLAnchorElement>("[data-ancre]").forEach((a) =>
+    a.addEventListener("click", async (e) => {
+      e.preventDefault();
+      const id = a.hash.slice(1);
+      const index = sections.findIndex((s) => s.querySelector("h2")?.id === id);
+      history.replaceState(null, "", `#${id}`);
+      marquer(index);
+      verrou = Date.now() + 900;
+      sections[index]?.scrollIntoView({ behavior: defilement(), block: "start" });
+      try {
+        await navigator.clipboard.writeText(location.href);
+      } catch (e) {}
+      a.querySelector("[data-icone-lien]")?.classList.add("hidden");
+      a.querySelector("[data-icone-copie]")?.classList.remove("hidden");
+      a.title = "Lien copié";
+      annoncer("Lien de la section copié");
+      setTimeout(() => {
+        a.querySelector("[data-icone-lien]")?.classList.remove("hidden");
+        a.querySelector("[data-icone-copie]")?.classList.add("hidden");
+        a.title = "Copier le lien de cette section";
+      }, 1600);
+    })
+  );
+
+  // Agrandissement des captures
+  const zoom = document.querySelector<HTMLDialogElement>("[data-zoom]");
+  const zoomCadre = document.querySelector<HTMLElement>("[data-zoom-cadre]");
+  const zoomImage = document.querySelector<HTMLImageElement>("[data-zoom-image]");
+
+  /** Taille réelle : l'image dépasse l'écran et on la parcourt en défilant. */
+  const tailleReelle = (actif: boolean) => {
+    zoomImage?.classList.toggle("max-h-[calc(100dvh-5rem)]", !actif);
+    zoomImage?.classList.toggle("max-w-full", !actif);
+    zoomImage?.classList.toggle("max-w-none", actif);
+    if (zoomImage) zoomImage.style.cursor = actif ? "zoom-out" : reduite() ? "zoom-in" : "";
+  };
+  /** La page affiche une version réduite de la capture ; le zoom prend la plus large du srcset. */
+  const plusGrande = (img: HTMLImageElement) => {
+    const versions = img.srcset
+      .split(",")
+      .map((v) => v.trim().split(/\s+/))
+      .filter(([url, largeur]) => url && largeur?.endsWith("w"))
+      .sort((a, b) => parseInt(b[1]) - parseInt(a[1]));
+    return versions[0]?.[0] ?? img.currentSrc ?? img.src;
+  };
+  const reduite = () => !!zoomImage && zoomImage.naturalWidth > zoomImage.clientWidth + 1;
+
+  document.querySelectorAll<HTMLButtonElement>("[data-zoom-ouvrir]").forEach((b) =>
+    b.addEventListener("click", () => {
+      const img = b.querySelector("img");
+      if (!zoom || !zoomImage || !img) return;
+      zoomImage.src = plusGrande(img);
+      zoomImage.alt = img.alt;
+      tailleReelle(false);
+      document.documentElement.classList.add("overflow-hidden");
+      zoom.showModal();
+      requestAnimationFrame(() => tailleReelle(false));
+    })
+  );
+
+  zoomImage?.addEventListener("click", () => {
+    const actif = zoomImage.classList.contains("max-w-none");
+    if (actif || reduite()) tailleReelle(!actif);
+  });
+  // Un clic à côté de l'image ferme, comme la croix et la touche Échap
+  zoomCadre?.addEventListener("click", (e) => {
+    if (e.target !== zoomImage) zoom?.close();
+  });
+  document.querySelector("[data-zoom-fermer]")?.addEventListener("click", () => zoom?.close());
+  zoom?.addEventListener("close", () => document.documentElement.classList.remove("overflow-hidden"));
+
+  // PDF : impression du navigateur, avec la feuille d'impression du site
+  document.querySelectorAll("[data-imprimer]").forEach((b) => b.addEventListener("click", () => window.print()));
+
+  // Mode lecture (desktop) : masque l'en-tête et la colonne, recentre l'article.
+  // La mise en page elle-même est dans global.css, sous `.mode-lecture`.
+  const entete = document.querySelector<HTMLElement>("header[data-no-print]");
+  const sortie = document.querySelector<HTMLElement>("[data-sortie-lecture]");
+
+  /** Premier bloc lu en haut de l'écran (paragraphe, code, liste…) et le point lu dans ce bloc. */
+  const repere = () => {
+    const ligne = document.documentElement.classList.contains("mode-lecture") ? 16 : 72;
+    const blocs = document.querySelectorAll<HTMLElement>(
+      "[data-doc-grille] article > *, [data-doc-grille] article [data-doc-section] > *, [data-doc-grille] article .prose-doc > *"
+    );
+    for (const bloc of blocs) {
+      const r = bloc.getBoundingClientRect();
+      if (r.height > 0 && r.bottom > ligne) {
+        const part = Math.max(0, ligne - r.top) / r.height;
+        return { bloc, part, point: r.top + part * r.height };
+      }
+    }
+    return null;
+  };
+
+  const lecture = (actif: boolean) => {
+    // La largeur de colonne change et le texte se recompose : on garde le passage lu au même
+    // endroit de l'écran, au lieu de revenir au début de sa section.
+    const avant = window.scrollY > 0 ? repere() : null;
+    document.documentElement.classList.toggle("mode-lecture", actif);
+    if (entete) entete.hidden = actif;
+    if (sortie) sortie.hidden = !actif;
+    if (!avant) return window.scrollTo({ top: 0, behavior: "instant" });
+    const r = avant.bloc.getBoundingClientRect();
+    const decalage = actif ? -56 : 56; // la barre du haut disparaît ou revient
+    const cible = window.scrollY + r.top + avant.part * r.height - avant.point - decalage;
+    window.scrollTo({ top: Math.max(0, cible), behavior: "instant" });
+  };
+
+  document.querySelector("[data-mode-lecture]")?.addEventListener("click", () => lecture(true));
+  document.querySelector("[data-quitter-lecture]")?.addEventListener("click", () => lecture(false));
+  window.addEventListener("keydown", (e) => {
+    if (e.key !== "Escape" || zoom?.open) return;
+    if (document.documentElement.classList.contains("mode-lecture")) lecture(false);
+  });
+</script>

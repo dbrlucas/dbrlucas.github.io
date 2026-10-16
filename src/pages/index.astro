@@ -1,0 +1,181 @@
+---
+import { ArrowUpRight, Mail } from "@lucide/astro";
+import Base from "../layouts/Base.astro";
+import DocRow from "../components/DocRow.astro";
+import SectionHeader from "../components/SectionHeader.astro";
+import { profiles } from "../data/profils";
+import { projects } from "../data/projets";
+import { chargerWriteups } from "../lib/writeups";
+import { bio, notesAccueil } from "../data/site";
+import { badgesNote, hrefWriteup, horodatage, notesParTitre, writeupsRecents } from "../lib/contenu";
+import { chargerCoffre } from "../lib/coffre";
+
+const derniersWriteups = writeupsRecents(await chargerWriteups(), 3);
+const notesMisesEnAvant = notesParTitre(await chargerCoffre(), notesAccueil).sort(
+  (a, b) => horodatage(b.date) - horodatage(a.date)
+);
+const projetsMisEnAvant = projects.slice(0, 2);
+---
+
+<Base title="dbrlucas | Portfolio Cybersécurité" active="home">
+  <div class="flex justify-center">
+    <div class="flex w-full max-w-[920px] flex-col gap-9 px-5 pt-7 pb-7 md:gap-14 md:pt-16 md:pb-16">
+      <!-- Haut de page : identité, bio, profils -->
+      <section class="grid gap-9 md:grid-cols-[480px_minmax(0,1fr)] md:items-center md:gap-10">
+        <div class="flex flex-col gap-4 md:gap-[22px]">
+          <div class="flex items-center gap-4">
+            {/* Même portrait sur fond clair ou sombre, selon le thème (sources et génération : scripts/generer-photo.mjs). */}
+            {[["clair", "dark:hidden"], ["sombre", "hidden dark:block"]].map(([version, affichage]) => (
+              <img
+                src={`/avatar-${version}.jpg`}
+                alt=""
+                width="96"
+                height="96"
+                class={`controle ${affichage} size-[92px] shrink-0 rounded-[14px] border border-border bg-muted object-cover md:size-24`}
+              />
+            ))}
+            <div class="flex flex-col gap-1.5">
+              <h1
+                class="m-0 text-[31px] leading-[1.15] font-semibold tracking-[-0.03em] md:text-[32px] md:leading-[1.1]"
+              >
+                dbrlucas
+              </h1>
+              <span class="text-[15px] text-muted-foreground">Étudiant en Cybersécurité</span>
+            </div>
+          </div>
+
+          <p class="m-0 max-w-[620px] text-[15px] leading-[1.7] text-pretty text-muted-foreground">
+            {/* Les mots à trait d'union (« write-ups ») ne sont jamais coupés en fin de ligne. */}
+            {bio.split(/(\S+-\S+)/).map((morceau, i) => (i % 2 ? <span class="whitespace-nowrap">{morceau}</span> : morceau))}
+          </p>
+
+          <div class="flex gap-2 pt-1">
+            <a
+              href="mailto:dbrlucas@pm.me"
+              class="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-lg bg-secondary px-4 text-[15px] font-medium text-secondary-foreground transition-colors hover:bg-[color-mix(in_srgb,var(--secondary)_94%,var(--foreground))] md:text-sm md:h-[38px] md:flex-none"
+            >
+              <Mail size={14} />
+              Me contacter
+            </a>
+            <a
+              href="https://github.com/dbrlucas"
+              target="_blank"
+              rel="me noopener noreferrer"
+              class="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-lg border border-border px-4 text-[15px] font-medium md:text-sm transition-colors hover:bg-muted md:h-[38px] md:flex-none"
+            >
+              GitHub
+              <ArrowUpRight size={14} />
+              <span class="sr-only">(s'ouvre dans un nouvel onglet)</span>
+            </a>
+          </div>
+        </div>
+
+        <div class="flex flex-col gap-3">
+          {
+            profiles.map((p) => (
+              <a
+                href={p.url}
+                target="_blank"
+                rel="me noopener noreferrer"
+                class="flex items-center justify-between gap-3 rounded-[14px] border border-border bg-card px-4 py-[14px] shadow-[var(--shadow-sm)] transition-colors hover:border-border-hover hover:bg-surface-hover md:px-[18px]"
+              >
+                <span class="flex min-w-0 flex-col gap-[3px]">
+                  <span class="text-sm font-medium">{p.name}</span>
+                  <span class="truncate font-mono text-[11px] text-muted-foreground">{p.handle}</span>
+                </span>
+                <span class="flex shrink-0 items-center gap-2">
+                  <span class="text-base font-semibold tracking-[-0.02em] whitespace-nowrap text-brand-text md:text-[15px]">
+                    {p.metric}
+                  </span>
+                  <ArrowUpRight size={14} class="text-muted-foreground" />
+                  <span class="sr-only">(s'ouvre dans un nouvel onglet)</span>
+                </span>
+              </a>
+            ))
+          }
+        </div>
+      </section>
+
+      <!-- Derniers write-ups -->
+      <section class="flex flex-col gap-3.5 md:gap-4">
+        <SectionHeader title="Write-ups" href="/write-ups" />
+        <div class="flex flex-col gap-3">
+          {
+            derniersWriteups.map((w) => (
+              <DocRow
+                href={hrefWriteup(w)}
+                title={w.title}
+                desc={w.desc}
+                date={w.date}
+                cat={w.cat}
+                platform={w.platform}
+                diff={w.diff}
+              />
+            ))
+          }
+        </div>
+      </section>
+
+      <!-- Notes mises en avant -->
+      <section class="flex flex-col gap-3.5 md:gap-4">
+        <SectionHeader title="Notes" href="/notes" />
+        <div class="flex flex-col gap-3">
+          {
+            notesMisesEnAvant.map((n) => {
+              const b = badgesNote(n);
+              return (
+                <DocRow href={n.href} title={n.nom} desc={n.desc} date={n.date} cat={b.cat} platform={b.platform} diff={n.diff} />
+              );
+            })
+          }
+        </div>
+      </section>
+
+      <!-- Projets -->
+      <section class="flex flex-col gap-3.5 md:gap-4">
+        <SectionHeader title="Projets" href="/projets" />
+        <div class="flex flex-col gap-3">
+          {
+            projetsMisEnAvant.map((p) => (
+              <article
+                class:list={[
+                  "flex flex-col rounded-[14px] border border-border bg-card px-4 py-[14px] shadow-[var(--shadow-sm)] md:px-[18px] md:py-4",
+                  // Sans bouton de code, on reprend le rythme des cartes de notes et write-ups (DocRow).
+                  p.lien ? "gap-2.5" : "gap-[7px]"
+                ]}
+              >
+                <div class="flex items-baseline justify-between gap-3">
+                  <h3 class="m-0 min-w-0 text-[15px] font-medium tracking-[-0.01em]">{p.title}</h3>
+                  <span class="font-mono text-xs whitespace-nowrap text-muted-foreground">{p.periode}</span>
+                </div>
+                <p class="m-0 text-sm leading-[1.6] text-muted-foreground">{p.desc}</p>
+                <!-- mt-auto : la ligne des badges reste en bas de la carte quand sa voisine est plus haute. -->
+                <div class:list={["mt-auto flex items-center gap-3", p.lien ? "pt-1 md:pt-1.5" : "pt-0.5"]}>
+                  <div class="flex min-w-0 flex-1 flex-wrap items-start gap-1.5">
+                    {p.tags.map((t) => (
+                      <span class="inline-flex shrink-0 items-center rounded-full border border-brand-line bg-brand-tint px-2 py-0.5 font-mono text-xs whitespace-nowrap text-brand-text">
+                        {t}
+                      </span>
+                    ))}
+                  </div>
+                  {p.lien && (
+                    <a
+                      href={p.lien.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      class="controle inline-flex h-[42px] shrink-0 items-center gap-1.5 rounded-lg border border-border px-3 text-[13px] font-medium whitespace-nowrap transition-colors hover:bg-muted md:h-8"
+                    >
+                      {p.lien.label}
+                      <ArrowUpRight size={14} />
+                      <span class="sr-only">(s'ouvre dans un nouvel onglet)</span>
+                    </a>
+                  )}
+                </div>
+              </article>
+            ))
+          }
+        </div>
+      </section>
+    </div>
+  </div>
+</Base>

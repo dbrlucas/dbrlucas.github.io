@@ -1,0 +1,26 @@
+---
+import Base from "../../layouts/Base.astro";
+import WriteupsBrowser from "../../components/WriteupsBrowser";
+import { chargerWriteups } from "../../lib/writeups";
+
+const writeups = await chargerWriteups();
+---
+
+<Base
+  title="Write-ups | dbrlucas"
+  description="Les challenges que je résous, détaillés étape par étape."
+  active="writeups"
+>
+  <div class="flex justify-center">
+    <div class="flex w-full max-w-[920px] flex-col gap-[18px] px-5 pt-6 pb-6 md:gap-6 md:pt-12 md:pb-12">
+      <header class="flex flex-col gap-1.5 md:gap-2">
+        <h1 class="m-0 text-2xl font-semibold tracking-[-0.03em] md:text-[28px]">Write-ups</h1>
+        <p class="m-0 text-sm text-pretty text-muted-foreground">
+          Les challenges que je résous, détaillés étape par étape.
+        </p>
+      </header>
+
+      <WriteupsBrowser writeups={writeups} client:load />
+    </div>
+  </div>
+</Base>

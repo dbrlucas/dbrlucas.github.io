@@ -1,0 +1,30 @@
+---
+import Base from "../layouts/Base.astro";
+---
+
+<Base title="Page introuvable | dbrlucas" description="Cette adresse ne correspond à aucune page." active="none">
+  <div class="flex justify-center">
+    <div
+      class="flex w-full max-w-[920px] flex-col items-center gap-3 px-5 pt-[72px] pb-[72px] md:gap-3.5 md:pt-[120px] md:pb-[120px]"
+    >
+      <span class="font-mono text-[13px] tracking-[0.08em] text-muted-foreground">404</span>
+      <h1 class="m-0 text-center text-2xl font-semibold tracking-[-0.03em] md:text-[28px]">Page introuvable</h1>
+      <p class="m-0 max-w-[420px] text-center text-sm leading-[1.7] text-muted-foreground">
+        Cette adresse ne correspond à aucune page. Le document a peut-être été renommé ou déplacé.
+      </p>
+      <div class="flex w-full items-center gap-2.5 pt-2.5 md:w-auto md:gap-2">
+        <a
+          href="/"
+          class="inline-flex h-11 flex-1 items-center justify-center rounded-lg bg-secondary px-4 text-[15px] font-medium text-secondary-foreground transition-colors hover:bg-[color-mix(in_srgb,var(--secondary)_94%,var(--foreground))] md:h-[38px] md:flex-none md:px-[14px] md:text-sm"
+          >Accueil</a
+        >
+        <button
+          type="button"
+          data-ouvrir-recherche
+          class="controle-desktop inline-flex h-11 flex-1 items-center justify-center rounded-lg border border-border px-4 text-[15px] font-medium transition-colors hover:bg-muted md:h-9 md:flex-none md:px-[14px] md:text-sm"
+          >Rechercher</button
+        >
+      </div>
+    </div>
+  </div>
+</Base>

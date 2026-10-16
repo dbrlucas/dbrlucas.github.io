@@ -1,0 +1,206 @@
+---
+import { Search, Sun, Moon, Menu, X } from "@lucide/astro";
+
+interface Props {
+  active?: "home" | "writeups" | "notes" | "projects" | "none";
+}
+const { active = "none" } = Astro.props;
+
+const liens = [
+  { label: "Accueil", href: "/", cle: "home" },
+  { label: "Write-ups", href: "/write-ups", cle: "writeups" },
+  { label: "Notes", href: "/notes", cle: "notes" },
+  { label: "Projets", href: "/projets", cle: "projects" }
+] as const;
+
+const lienBase = "rounded-lg px-2.5 py-2 text-sm transition-colors";
+const lienActif = "bg-brand-tint text-brand-text font-medium";
+const lienInactif = "text-muted-foreground hover:bg-muted hover:text-foreground";
+const carre =
+  "controle flex size-8 items-center justify-center rounded-lg border border-border transition-colors hover:bg-muted";
+const carreMobile =
+  "flex size-11 items-center justify-center rounded-[10px] transition-colors hover:bg-muted md:hidden";
+---
+
+<!-- Barre sans filet, fond flouté uniforme qui s'estompe juste sous la barre (.barre-fond dans global.css). La bordure
+     transparente garde la hauteur de 57 / 59 px dont dépend le halo du haut en mode lecture. -->
+<header
+  data-no-print
+  class="barre-fond sticky top-0 z-20 flex flex-col items-center border-b border-transparent"
+>
+  <!-- Colonne de 880 px au plus, avec 20 px de marge de chaque côté (920 px en tout) : le contenu ne touche
+       jamais les bords de la fenêtre, quelle que soit sa largeur. Même règle sur chaque page. -->
+  <div class="flex h-14 w-full max-w-[920px] items-center justify-between pr-3 pl-5 md:h-auto md:px-5 md:py-3">
+    <!-- Sur ordinateur, le nom ouvre la navigation : il mène à l'accueil, qui n'a donc pas de lien à part. -->
+    <div class="flex items-center gap-2">
+      <a
+        href="/"
+        class="controle-desktop text-[15px] font-medium tracking-[-0.01em] whitespace-nowrap md:flex md:h-8 md:items-center md:rounded-lg md:border md:border-border md:px-3 md:text-sm md:transition-colors md:hover:bg-muted"
+        aria-current={active === "home" ? "page" : undefined}>dbrlucas</a
+      >
+      <nav aria-label="Navigation principale" class="hidden items-center gap-0.5 md:flex">
+        {
+          liens
+            .filter((l) => l.cle !== "home")
+            .map((l) => (
+              <a
+                href={l.href}
+                class={`${lienBase} ${active === l.cle ? lienActif : lienInactif}`}
+                aria-current={active === l.cle ? "page" : undefined}
+              >
+                {l.label}
+              </a>
+            ))
+        }
+      </nav>
+    </div>
+
+    <div class="flex items-center gap-0.5">
+      <button
+        type="button"
+        data-ouvrir-recherche
+        aria-haspopup="dialog"
+        aria-keyshortcuts="Control+K Meta+K"
+        class={`${carre} hidden md:flex`}
+        aria-label="Rechercher"
+      >
+        <Search size={16} />
+      </button>
+      <!-- L'icône montre le thème vers lequel on bascule : lune en thème clair, soleil en thème sombre. -->
+      <button type="button" data-theme-toggle aria-pressed="false" class={`${carre} ml-1 hidden md:flex`} aria-label="Thème sombre">
+        <Moon size={16} class="dark:hidden" />
+        <Sun size={16} class="hidden dark:block" />
+      </button>
+
+      <button type="button" data-ouvrir-recherche aria-haspopup="dialog" class={carreMobile} aria-label="Rechercher">
+        <Search size={20} />
+      </button>
+      <button type="button" data-theme-toggle aria-pressed="false" class={carreMobile} aria-label="Thème sombre">
+        <Moon size={20} class="dark:hidden" />
+        <Sun size={20} class="hidden dark:block" />
+      </button>
+      <button type="button" data-menu-toggle class={carreMobile} aria-label="Menu" aria-expanded="false" aria-controls="menu-mobile">
+        <Menu size={20} data-menu-icone="ouvrir" />
+        <X size={20} data-menu-icone="fermer" class="hidden" />
+      </button>
+    </div>
+  </div>
+
+  <!-- Menu mobile : dans la barre, il repousse le contenu vers le bas au lieu de le recouvrir. -->
+  <nav
+    id="menu-mobile"
+    aria-label="Menu"
+    data-menu
+    hidden
+    class="flex w-full flex-col p-3 md:hidden"
+  >
+    {
+      liens.map((l) => (
+        <a
+          href={l.href}
+          class={`flex h-12 items-center rounded-[10px] px-3 text-base ${active === l.cle ? lienActif : "text-foreground"}`}
+        >
+          {l.label}
+        </a>
+      ))
+    }
+  </nav>
+</header>
+
+<script>
+  // Thème : bascule et mémorisation. Le bouton est un interrupteur « Thème sombre » (aria-pressed).
+  const boutonsTheme = document.querySelectorAll<HTMLButtonElement>("[data-theme-toggle]");
+  const etatTheme = () =>
+    boutonsTheme.forEach((b) => b.setAttribute("aria-pressed", String(document.documentElement.classList.contains("dark"))));
+  etatTheme();
+  boutonsTheme.forEach((b) =>
+    b.addEventListener("click", () => {
+      const sombre = document.documentElement.classList.toggle("dark");
+      etatTheme();
+      document.querySelector<HTMLLinkElement>("link[data-favicon]")?.setAttribute("href", sombre ? "/favicon-sombre.png" : "/favicon-clair.png");
+      try {
+        localStorage.setItem("theme", sombre ? "dark" : "light");
+      } catch (e) {}
+    })
+  );
+
+  // Impression et PDF : toujours les couleurs du thème clair. Le papier est blanc et le navigateur
+  // n'imprime pas les fonds par défaut : en thème sombre, le texte clair deviendrait invisible.
+  // Le titre de la page sert aussi de nom au fichier PDF : « dbrlucas - Sherlock Nightfall » plutôt que
+  // « Sherlock — Nightfall : de la pièce jointe… | dbrlucas » (sous-titre après « : » retiré).
+  // `enImpression` : le navigateur peut signaler deux fois le début d'une impression ; on ne mémorise
+  // l'état de la page qu'à la première, pour toujours pouvoir le rétablir.
+  let enImpression = false;
+  let sombreAvantImpression = false;
+  let titreAvantImpression = "";
+  const nomDuFichier = (titre: string) => {
+    const sujet = titre
+      .replace(/^dbrlucas \| /, "")
+      .replace(/ \| dbrlucas$/, "")
+      .split(" : ")[0]
+      .replace(/\s*[—|]\s*/g, " ")
+      .trim();
+    return `dbrlucas - ${sujet}`;
+  };
+  window.addEventListener("beforeprint", () => {
+    if (enImpression) return;
+    enImpression = true;
+    sombreAvantImpression = document.documentElement.classList.contains("dark");
+    document.documentElement.classList.remove("dark");
+    titreAvantImpression = document.title;
+    document.title = nomDuFichier(document.title);
+  });
+  window.addEventListener("afterprint", () => {
+    if (!enImpression) return;
+    enImpression = false;
+    if (sombreAvantImpression) document.documentElement.classList.add("dark");
+    if (titreAvantImpression) document.title = titreAvantImpression;
+  });
+
+  // Menu mobile : l'ouvrir ramène en haut de la page, comme dans la maquette.
+  const menu = document.querySelector<HTMLElement>("[data-menu]");
+  const bouton = document.querySelector<HTMLButtonElement>("[data-menu-toggle]");
+  const basculerMenu = (ouvert: boolean) => {
+    if (ouvert) window.scrollTo(0, 0);
+    if (menu) menu.hidden = !ouvert;
+    bouton?.setAttribute("aria-expanded", String(ouvert));
+    document.querySelector("[data-menu-icone='ouvrir']")?.classList.toggle("hidden", ouvert);
+    document.querySelector("[data-menu-icone='fermer']")?.classList.toggle("hidden", !ouvert);
+  };
+  bouton?.addEventListener("click", () => {
+    const ouvrir = menu?.hidden === true;
+    basculerMenu(ouvrir);
+    if (ouvrir) surveillerDefilement();
+  });
+
+  // Faire défiler la page referme le menu. L'ouverture ramène elle-même en haut de la page :
+  // on attend d'y être arrivé (ou un court délai) avant de surveiller le défilement de l'utilisateur.
+  let reference: number | null = null;
+  let delai = 0;
+  const surveillerDefilement = () => {
+    window.clearTimeout(delai);
+    reference = window.scrollY <= 1 ? window.scrollY : null;
+    delai = window.setTimeout(() => {
+      if (reference === null) reference = window.scrollY;
+    }, 1200);
+  };
+  window.addEventListener(
+    "scroll",
+    () => {
+      if (!menu || menu.hidden) return;
+      if (reference === null) {
+        if (window.scrollY <= 1) reference = window.scrollY;
+        return;
+      }
+      if (Math.abs(window.scrollY - reference) > 12) basculerMenu(false);
+    },
+    { passive: true }
+  );
+  // Échap ferme le menu et rend le focus au bouton qui l'a ouvert.
+  window.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && menu && !menu.hidden) {
+      basculerMenu(false);
+      bouton?.focus();
+    }
+  });
+</script>

@@ -1,0 +1,151 @@
+---
+import { render } from "astro:content";
+import { ArrowLeft, ChevronRight, Folder } from "@lucide/astro";
+import Base from "../../layouts/Base.astro";
+import DocPage from "../../components/DocPage.astro";
+import DocRow from "../../components/DocRow.astro";
+import NotesSearch from "../../components/NotesSearch";
+import {
+  badgesNote,
+  hrefDossier,
+  listerDossier,
+  slug,
+  tousLesDossiers,
+  toutesLesNotes,
+  type NoteAplatie
+} from "../../lib/contenu";
+import { documentDeNote } from "../../lib/documents";
+import { chargerCoffre, entreeDeNote } from "../../lib/coffre";
+
+export async function getStaticPaths() {
+  const coffre = await chargerCoffre();
+  const racine = [{ params: { chemin: undefined }, props: { note: undefined, segments: [] as string[] } }];
+  const dossiers = tousLesDossiers(coffre).map((c) => ({
+    params: { chemin: c.map(slug).join("/") },
+    props: { note: undefined, segments: c.map(slug) }
+  }));
+  const notes = toutesLesNotes(coffre).map((n) => ({
+    params: { chemin: [...n.chemin, n.nom].map(slug).join("/") },
+    props: { note: n, segments: n.chemin.map(slug) }
+  }));
+  return [...racine, ...dossiers, ...notes];
+}
+
+interface Props {
+  note?: NoteAplatie;
+  segments: string[];
+}
+const { note, segments } = Astro.props;
+
+const coffre = await chargerCoffre();
+const toutes = toutesLesNotes(coffre);
+const dossier = note ? null : listerDossier(coffre, segments);
+const doc = note ? documentDeNote(note, toutes) : null;
+
+// Corps de la note, lu dans son fichier Markdown.
+const entree = note ? await entreeDeNote(note) : undefined;
+const rendu = entree ? await render(entree) : undefined;
+if (doc && entree) {
+  doc.summary = entree.data.resume ?? entree.data.description;
+  doc.lien = entree.data.lien ?? doc.lien;
+}
+const sommaire = rendu?.headings
+  .filter((h) => h.depth === 2 && h.slug !== "footnote-label")
+  .map((h) => ({ label: h.text, id: h.slug }));
+const titrePage = note ? `${note.nom} | dbrlucas` : dossier!.noms.length ? `${dossier!.noms.at(-1)} | Notes | dbrlucas` : "Notes | dbrlucas";
+const filAriane = dossier ? ["Notes", ...dossier.noms] : [];
+---
+
+<Base
+  title={titrePage}
+  description={note ? note.desc : "Ce que je retiens de mes parcours de formation, rangé par module."}
+  active="notes"
+>
+  {
+    note && doc ? (
+      rendu ? (
+        <DocPage doc={doc} sommaire={sommaire}>
+          <rendu.Content />
+        </DocPage>
+      ) : (
+        <DocPage doc={doc} />
+      )
+    ) : (
+      <div class="flex justify-center">
+        <div class="flex w-full max-w-[920px] flex-col gap-[18px] px-5 pt-6 pb-6 md:gap-6 md:pt-12 md:pb-12">
+          <header class="flex flex-col gap-1.5 md:gap-2">
+            <h1 class="m-0 text-2xl font-semibold tracking-[-0.03em] md:text-[28px]">Notes</h1>
+            <p class="m-0 text-sm text-pretty text-muted-foreground">
+              Ce que je retiens de mes parcours de formation, rangé par module.
+            </p>
+          </header>
+
+          <NotesSearch notes={toutes} client:load />
+
+          <div data-parcours class="flex flex-col gap-[18px] md:gap-6">
+            {/* Chemin, bouton retour et compteur */}
+            <div class="flex min-h-11 items-center justify-between gap-3 md:min-h-8 md:gap-4">
+              <div class="flex min-w-0 flex-1 items-center gap-2.5 md:gap-2.5">
+                {segments.length > 0 && (
+                  <a
+                    href={hrefDossier(dossier!.noms.slice(0, -1))}
+                    aria-label="Dossier parent"
+                    class="controle-desktop flex size-11 shrink-0 items-center justify-center rounded-[10px] border border-border transition-colors hover:bg-muted md:size-8 md:rounded-lg"
+                  >
+                    <ArrowLeft size={20} class="size-5 md:size-4" />
+                  </a>
+                )}
+                <div class="hidden min-w-0 flex-wrap items-center gap-1.5 font-mono text-xs text-muted-foreground md:flex">
+                  {filAriane.map((niveau, i) => (
+                    <>
+                      {i > 0 && <span class="opacity-60">/</span>}
+                      {i < filAriane.length - 1 ? (
+                        <a href={hrefDossier(dossier!.noms.slice(0, i))} class="transition-colors hover:text-brand-text">
+                          {niveau}
+                        </a>
+                      ) : (
+                        <span class="text-foreground">{niveau}</span>
+                      )}
+                    </>
+                  ))}
+                </div>
+                <div class="flex min-w-0 flex-1 flex-col gap-0.5 md:hidden">
+                  {segments.length > 0 && (
+                    <span class="truncate font-mono text-[11px] text-muted-foreground">
+                      {["Notes", ...dossier!.noms.slice(0, -1)].join(" / ")}
+                    </span>
+                  )}
+                  <span class="truncate text-[15px] font-medium tracking-[-0.01em]">
+                    {dossier!.noms.at(-1) ?? "Notes"}
+                  </span>
+                </div>
+              </div>
+              <span class="shrink-0 font-mono text-xs text-muted-foreground">
+                {dossier!.nombre} / {dossier!.total}
+              </span>
+            </div>
+
+            <div class="flex flex-col gap-3">
+              {dossier!.dossiers.map((d) => (
+                <a
+                  href={d.href}
+                  class="flex items-center gap-3 rounded-[14px] border border-border bg-card p-4 shadow-[var(--shadow-sm)] transition-colors hover:border-border-hover hover:bg-surface-hover md:px-[18px] md:py-[14px]"
+                >
+                  <Folder size={16} class="shrink-0 text-brand" />
+                  <span class="min-w-0 flex-1 text-[15px] font-medium tracking-[-0.01em] md:truncate">{d.nom}</span>
+                  <span class="shrink-0 font-mono text-[11px] text-muted-foreground md:text-xs">{d.nombre}</span>
+                  <ChevronRight size={16} class="shrink-0 text-muted-foreground" />
+                </a>
+              ))}
+
+              {dossier!.notes.map((n) => {
+                const b = badgesNote(n);
+                return <DocRow href={n.href} title={n.nom} desc={n.desc} date={n.date} cat={b.cat} platform={b.platform} diff={n.diff} />;
+              })}
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+</Base>

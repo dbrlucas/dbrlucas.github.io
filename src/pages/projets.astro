@@ -1,0 +1,57 @@
+---
+import { ArrowUpRight } from "@lucide/astro";
+import Base from "../layouts/Base.astro";
+import { projects } from "../data/projets";
+
+const bouton =
+  "controle inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-border px-3 text-[13px] font-medium whitespace-nowrap transition-colors hover:bg-muted";
+---
+
+<Base title="Projets | dbrlucas" description="Mes projets et contributions, en recherche comme en pratique." active="projects">
+  <div class="flex justify-center">
+    <div class="flex w-full max-w-[920px] flex-col gap-[18px] px-5 pt-6 pb-6 md:gap-6 md:pt-12 md:pb-12">
+      <header class="flex flex-col gap-1.5 md:gap-2">
+        <h1 class="m-0 text-2xl font-semibold tracking-[-0.03em] md:text-[28px]">Projets</h1>
+        <p class="m-0 text-sm text-pretty text-muted-foreground">
+          Mes projets et contributions, en recherche comme en pratique.
+        </p>
+      </header>
+
+      <div class="flex flex-col gap-3">
+        {
+          projects.map((p) => (
+            <article
+              class:list={[
+                "flex flex-col rounded-[14px] border border-border bg-card px-4 py-[14px] shadow-[var(--shadow-sm)] md:px-[18px] md:py-4",
+                // Sans bouton de code, on reprend le rythme des cartes de notes et write-ups (DocRow).
+                p.lien ? "gap-2.5" : "gap-[7px]"
+              ]}
+            >
+              <div class="flex items-baseline justify-between gap-3">
+                <h2 class="m-0 min-w-0 text-[15px] font-medium tracking-[-0.01em]">{p.title}</h2>
+                <span class="font-mono text-xs whitespace-nowrap text-muted-foreground">{p.periode}</span>
+              </div>
+              <p class="m-0 text-sm leading-[1.6] text-muted-foreground">{p.desc}</p>
+              <div class:list={["mt-auto flex items-center gap-3", p.lien ? "pt-1 md:pt-1.5" : "pt-0.5"]}>
+                <div class="flex min-w-0 flex-1 flex-wrap items-start gap-1.5">
+                  {p.tags.map((t) => (
+                    <span class="inline-flex shrink-0 items-center rounded-full border border-brand-line bg-brand-tint px-2 py-0.5 font-mono text-xs whitespace-nowrap text-brand-text">
+                      {t}
+                    </span>
+                  ))}
+                </div>
+                {p.lien && (
+                  <a href={p.lien.href} target="_blank" rel="noopener noreferrer" class={`${bouton} h-[42px] md:h-8`}>
+                    {p.lien.label}
+                    <ArrowUpRight size={14} />
+                    <span class="sr-only">(s'ouvre dans un nouvel onglet)</span>
+                  </a>
+                )}
+              </div>
+            </article>
+          ))
+        }
+      </div>
+    </div>
+  </div>
+</Base>

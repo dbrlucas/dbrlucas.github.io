@@ -1,0 +1,39 @@
+---
+import { render } from "astro:content";
+import Base from "../../layouts/Base.astro";
+import DocPage from "../../components/DocPage.astro";
+import { slug } from "../../lib/contenu";
+import { documentDeWriteup } from "../../lib/documents";
+import { chargerWriteups, entreeDeWriteup } from "../../lib/writeups";
+
+export async function getStaticPaths() {
+  const writeups = await chargerWriteups();
+  return writeups.map((w) => ({ params: { slug: slug(w.title) }, props: { w, writeups } }));
+}
+
+const { w, writeups } = Astro.props;
+const doc = documentDeWriteup(w, writeups);
+
+// Corps du write-up, lu dans son fichier Markdown.
+const entree = await entreeDeWriteup(w);
+const rendu = entree ? await render(entree) : undefined;
+if (entree) {
+  doc.summary = entree.data.resume ?? entree.data.description;
+  doc.lien = entree.data.lien ?? doc.lien;
+}
+const sommaire = rendu?.headings
+  .filter((h) => h.depth === 2 && h.slug !== "footnote-label")
+  .map((h) => ({ label: h.text, id: h.slug }));
+---
+
+<Base title={`${w.title} | dbrlucas`} description={w.desc} active="writeups">
+  {
+    rendu ? (
+      <DocPage doc={doc} sommaire={sommaire}>
+        <rendu.Content />
+      </DocPage>
+    ) : (
+      <DocPage doc={doc} />
+    )
+  }
+</Base>
