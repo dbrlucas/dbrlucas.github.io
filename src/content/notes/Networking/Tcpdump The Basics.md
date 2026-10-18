@@ -14,7 +14,7 @@ lien: "https://tryhackme.com/room/tcpdump"
 
 **Tcpdump** : outil en ligne de commande qui capture et analyse le trafic d'une interface réseau. Il est léger, rapide et très utilisé sous Unix et Linux.
 
-**libpcap** : bibliothèque de capture de paquets écrite en C. Tcpdump repose sur elle, comme beaucoup d'autres outils dont Wireshark.
+**libpcap** : bibliothèque de capture de paquets écrite en C. Tcpdump repose sur elle comme beaucoup d'autres outils dont Wireshark.
 
 **WinPcap** : version de libpcap pour Windows.
 
@@ -22,11 +22,11 @@ lien: "https://tryhackme.com/room/tcpdump"
 
 **Expression de filtrage** : règle passée à `tcpdump` pour limiter les paquets capturés, par hôte, par port ou par protocole.
 
-**Drapeaux TCP** : bits de contrôle de l'en-tête TCP, qui indiquent l'état de la connexion.
+**Drapeaux TCP** : bits de contrôle de l'en-tête TCP qui indiquent l'état de la connexion.
 
 ## Pourquoi capturer le trafic
 
-Les protocoles réseau restent d'habitude invisibles, cachés derrière le navigateur ou les applications. Capturer le trafic permet de voir concrètement les échanges, comme une requête ARP ou la poignée de main en trois temps de TCP.
+Les protocoles réseau restent d'habitude invisibles, cachés derrière le navigateur ou les applications. Capturer le trafic permet de voir concrètement les échanges comme une requête ARP ou la three-way handshake de TCP.
 
 Tcpdump et libpcap datent de la fin des années 1980 et du début des années 1990. Ce sont des outils fondamentaux et très stables.
 
@@ -113,7 +113,7 @@ Ces filtres utilisent des opérations sur les bits.
 
 ### Sur les drapeaux TCP
 
-Les drapeaux servent à observer les phases d'une connexion, comme la poignée de main avec SYN et ACK.
+Les drapeaux servent à observer les phases d'une connexion comme la handshake avec SYN et ACK.
 
 | Drapeau | Signification |
 | --- | --- |
@@ -147,16 +147,16 @@ tcpdump "ip[0] & 0xf != 5"
 
 | Option | Affichage | Usage |
 | --- | --- | --- |
-| `-q` | Résumé court, avec l'heure, les adresses, les ports, le protocole et la taille | Aperçu rapide |
-| `-e` | En-tête de niveau liaison, avec les adresses MAC | Comprendre les échanges Ethernet, ARP ou DHCP |
-| `-A` | Contenu en ASCII | Lire du texte en clair, comme du HTTP non chiffré |
+| `-q` | Résumé court avec l'heure, les adresses, les ports, le protocole et la taille | Aperçu rapide |
+| `-e` | En-tête de niveau liaison avec les adresses MAC | Comprendre les échanges Ethernet (ARP ou DHCP) |
+| `-A` | Contenu en ASCII | Lire du texte en clair comme du HTTP non chiffré |
 | `-xx` | Contenu en hexadécimal | Analyser les en-têtes et les données octet par octet |
 | `-X` | Hexadécimal et ASCII côte à côte | Analyse manuelle d'un paquet |
 
 ## À retenir
 
-- Tcpdump capture le trafic en ligne de commande, et s'appuie sur libpcap comme Wireshark.
-- `-w` enregistre une capture et `-r` la relit, sans droits particuliers.
+- Tcpdump capture le trafic en ligne de commande et s'appuie sur libpcap comme Wireshark.
+- `-w` enregistre une capture et `-r` la relit sans droits particuliers.
 - Les filtres `host`, `port` et de protocole se combinent avec `and`, `or` et `not`.
 - `proto[expr:size]` et les drapeaux TCP permettent de cibler un champ précis d'un en-tête.
 - `-A` et `-X` montrent le contenu des paquets, lisible quand le trafic n'est pas chiffré.

@@ -13,18 +13,18 @@ const RACINE = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const AXE = fs.readFileSync(path.join(RACINE, "node_modules", "axe-core", "axe.min.js"), "utf8");
 const NAVIGATEUR = path.join(process.env.LOCALAPPDATA ?? "", "ms-playwright", "chromium-1246", "chrome-win64", "chrome.exe");
 
-const NOTE_MD = "/notes/networking/nmap-the-basics";
+const NOTE_MD = "/notes/networking/nmap-the-basics/";
 
 /** Pages et états à auditer ; `action` ouvre un élément avant l'audit. */
 const PAGES = [
   { nom: "accueil", url: "/" },
-  { nom: "write-ups", url: "/write-ups" },
-  { nom: "write-ups, tri ouvert", url: "/write-ups", action: (p) => p.locator('button[aria-label="Trier"]').click(), bureau: true },
-  { nom: "write-up", url: "/write-ups/attacktive-directory" },
-  { nom: "notes", url: "/notes" },
-  { nom: "dossier", url: "/notes/networking" },
+  { nom: "write-ups", url: "/write-ups/" },
+  { nom: "write-ups, tri ouvert", url: "/write-ups/", action: (p) => p.locator('button[aria-label="Trier"]').click(), bureau: true },
+  { nom: "write-up", url: "/write-ups/attacktive-directory/" },
+  { nom: "notes", url: "/notes/" },
+  { nom: "dossier", url: "/notes/networking/" },
   { nom: "note Markdown", url: NOTE_MD },
-  { nom: "projets", url: "/projets" },
+  { nom: "projets", url: "/projets/" },
   { nom: "404", url: "/page-qui-n-existe-pas" },
   { nom: "palette de recherche", url: "/", action: (p) => p.keyboard.press("Control+k") },
   { nom: "menu mobile", url: "/", action: (p) => p.locator("[data-menu-toggle]").click(), mobile: true }

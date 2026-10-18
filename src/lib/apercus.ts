@@ -23,6 +23,9 @@ export type Apercu = {
   article: boolean;
 };
 
+/** Les liens du site finissent par « / », pas les chemins des aperçus. */
+const sansBarre = (href: string) => href.replace(/\/+$/, "") || "/";
+
 /** Couleurs de difficulté du thème sombre, celui des images d'aperçu. */
 const DIFFICULTE = { Easy: "#4ade80", Medium: "#fbbf24", Hard: "#f87171" } as const;
 
@@ -42,7 +45,7 @@ export async function tousLesApercus(): Promise<Apercu[]> {
     { ...page("/", "Portfolio Cybersécurité", bio), rubrique: "Portfolio", pastilles: [{ texte: "Write-ups" }, { texte: "Notes" }, { texte: "Projets" }] },
     page("/write-ups", "Write-ups", "Les challenges que je résous, détaillés étape par étape."),
     ...writeups.map((w) => ({
-      chemin: hrefWriteup(w),
+      chemin: sansBarre(hrefWriteup(w)),
       titre: w.title,
       rubrique: "Write-up",
       pastilles: [{ texte: w.cat, marque: true }, { texte: w.platform }, { texte: w.diff, point: DIFFICULTE[w.diff] }],
@@ -53,7 +56,7 @@ export async function tousLesApercus(): Promise<Apercu[]> {
     ...tousLesDossiers(coffre).map((chemin) => {
       const n = listerDossier(coffre, chemin).nombre;
       return {
-        chemin: hrefDossier(chemin),
+        chemin: sansBarre(hrefDossier(chemin)),
         titre: chemin.at(-1)!,
         rubrique: "Notes",
         pastilles: chemin.slice(0, -1).map((texte) => ({ texte })),
@@ -64,7 +67,7 @@ export async function tousLesApercus(): Promise<Apercu[]> {
     ...toutesLesNotes(coffre).map((n) => {
       const b = badgesNote(n);
       return {
-        chemin: n.href,
+        chemin: sansBarre(n.href),
         titre: n.nom,
         rubrique: "Note",
         pastilles: [

@@ -13,6 +13,9 @@ export default defineConfig({
   // Adresse prévue à la mise en ligne. La renseigner ne publie rien : elle sert à écrire
   // les liens absolus du sitemap et du flux RSS.
   site: 'https://dbrlucas.github.io',
+  // Toutes les pages sont des dossiers (notes/index.html) : avec la barre finale dans les liens,
+  // GitHub Pages sert la page directement au lieu de rediriger « /notes » vers « /notes/ ».
+  trailingSlash: 'always',
   integrations: [react(), sitemap()],
 
   // Notes en Markdown : pipeline remark/rehype, pour la syntaxe Obsidian et nos propres

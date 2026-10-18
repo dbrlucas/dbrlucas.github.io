@@ -1,7 +1,7 @@
 ---
 titre: "Attacktive Directory"
 description: "99 % des réseaux d'entreprise fonctionnent avec AD. Mais saurez-vous exploiter un contrôleur de domaine vulnérable ?"
-resume: "Partir d'un accès non authentifié sur le réseau et aller jusqu'au compte Administrateur du domaine, en enchaînant des faiblesses de configuration classiques d'Active Directory. Ce write-up suit toute la chaîne, de l'énumération à la prise de contrôle du contrôleur de domaine, puis en tire les leçons en terme de défense."
+resume: "On part d'un accès non authentifié sur le réseau pour aller jusqu'au compte Administrateur du domaine, en enchaînant des faiblesses de configuration classiques d'Active Directory. Ce write-up suit toute la chaîne, de l'énumération à la prise de contrôle du contrôleur de domaine, puis en tire les leçons en terme de défense."
 date: "19.09.2026"
 plateforme: "TryHackMe"
 categorie: "Active Directory"
@@ -17,27 +17,27 @@ Ce challenge part d'un accès non authentifié sur le réseau et cible le compte
 
 ## Méthodologie et chemin d'attaque
 
-La compromission suit une chaîne logique, où chaque étape débloque la suivante.
+La compromission suit une chaîne logique où chaque étape débloque la suivante.
 
 ```text
 Aucun accès
-   │  nmap / enum4linux            -> cartographie des services, nom de domaine
+   |  nmap / enum4linux            -> cartographie des services, nom de domaine
    .
 Énumération anonyme (null session)
    |  Kerbrute userenum            -> liste d'utilisateurs valides (svc-admin, backup…)
    .
 Utilisateurs valides
-   │  AS-REP Roasting (GetNPUsers) -> hash Kerberos de svc-admin (pas de pré-auth)
-   │  Hashcat                      -> mot de passe en clair
+   |  AS-REP Roasting (GetNPUsers) -> hash Kerberos de svc-admin (pas de pré-auth)
+   |  Hashcat                      -> mot de passe en clair
    .
 Compte svc-admin (utilisateur du domaine)
-   │  smbclient sur le partage "backup" + décodage Base64
+   |  smbclient sur le partage "backup" + décodage Base64
    .
 Compte backup (droits de réplication AD)
-   │  secretsdump.py (DCSync via DRSUAPI) -> tous les hash NTLM du domaine
+   |  secretsdump.py (DCSync via DRSUAPI) -> tous les hash NTLM du domaine
    .
 Hash NTLM de l'Administrateur
-   │  Evil-WinRM -H (Pass-the-Hash)
+   |  Evil-WinRM -H (Pass-the-Hash)
    .
 Contrôle total du domaine (Domain Admin)
 ```
@@ -87,7 +87,7 @@ PORT     STATE SERVICE       VERSION
 |   DNS_Computer_Name: AttacktiveDirectory.spookysec.local
 ```
 
-Les ports les plus parlants.
+Voici les ports les plus parlants.
 
 | Port | Service | Ce qu'il révèle |
 | --- | --- | --- |
@@ -97,7 +97,7 @@ Les ports les plus parlants.
 | 389 / 636 | LDAP / LDAPS | Annuaire AD |
 | 3389 | RDP | Accès bureau distant |
 
-Les scripts NSE donnent le domaine DNS `spookysec.local`, le domaine NetBIOS `THM-AD`, un OS (Windows Server 2019) et la signature SMB activée\requise.
+Les scripts NSE donnent le domaine DNS `spookysec.local`, le domaine NetBIOS `THM-AD`, un OS (Windows Server 2019) et la signature SMB activée/requise.
 
 ### Scan complet des ports
 
@@ -157,7 +157,7 @@ Deux comptes ressortent. Le préfixe `svc-` de **`svc-admin`** indique un compte
 
 L'AS-REP Roasting cible les comptes qui ont l'attribut "Do not require Kerberos pre-authentication" (`UF_DONT_REQUIRE_PREAUTH`).
 
-Normalement, la pré-authentification oblige le client à prouver qu'il connaît le mot de passe avant que le KDC ne renvoie quelque chose. Il chiffre pour cela un horodatage avec la clé dérivée de son mot de passe. Quand cette pré-authentification est désactivée, n'importe qui peut demander un AS-REP. Le KDC renvoie alors une portion chiffrée avec la clé dérivée du mot de passe de l'utilisateur, que l'on peut attaquer par bruteforce hors ligne.
+Normalement, la pré-authentification oblige le client à prouver qu'il connaît le mot de passe avant que le KDC ne renvoie quelque chose. Il chiffre pour cela un horodatage avec la clé dérivée de son mot de passe. Quand cette pré-authentification est désactivée, n'importe qui peut demander un AS-REP. Le KDC renvoie alors une portion chiffrée avec la clé dérivée du mot de passe de l'utilisateur, que l'on peut attaquer par brute force hors ligne.
 
 ### Récupération du hash
 

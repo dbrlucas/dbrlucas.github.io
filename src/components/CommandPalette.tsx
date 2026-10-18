@@ -33,9 +33,9 @@ function fusionner(parTitre: Entree[], tous: Entree[], dansLeTexte: Map<string, 
 
 const PAGES: Entree[] = [
   { label: "Accueil", indice: "Page", href: "/" },
-  { label: "Write-ups", indice: "Page", href: "/write-ups" },
-  { label: "Notes", indice: "Page", href: "/notes" },
-  { label: "Projets", indice: "Page", href: "/projets" }
+  { label: "Write-ups", indice: "Page", href: "/write-ups/" },
+  { label: "Notes", indice: "Page", href: "/notes/" },
+  { label: "Projets", indice: "Page", href: "/projets/" }
 ];
 
 export default function CommandPalette() {

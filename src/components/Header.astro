@@ -8,9 +8,9 @@ const { active = "none" } = Astro.props;
 
 const liens = [
   { label: "Accueil", href: "/", cle: "home" },
-  { label: "Write-ups", href: "/write-ups", cle: "writeups" },
-  { label: "Notes", href: "/notes", cle: "notes" },
-  { label: "Projets", href: "/projets", cle: "projects" }
+  { label: "Write-ups", href: "/write-ups/", cle: "writeups" },
+  { label: "Notes", href: "/notes/", cle: "notes" },
+  { label: "Projets", href: "/projets/", cle: "projects" }
 ] as const;
 
 const lienBase = "rounded-lg px-2.5 py-2 text-sm transition-colors";

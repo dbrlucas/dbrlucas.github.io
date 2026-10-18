@@ -49,15 +49,15 @@ export function toutesLesNotes(coffre: VaultNode[], chemin: string[] = []): Note
 }
 
 export function hrefNote(chemin: string[], nom: string): string {
-  return "/notes/" + [...chemin, nom].map(slug).join("/");
+  return "/notes/" + [...chemin, nom].map(slug).join("/") + "/";
 }
 
 export function hrefDossier(chemin: string[]): string {
-  return chemin.length ? "/notes/" + chemin.map(slug).join("/") : "/notes";
+  return chemin.length ? "/notes/" + chemin.map(slug).join("/") + "/" : "/notes/";
 }
 
 export function hrefWriteup(w: Writeup): string {
-  return "/write-ups/" + slug(w.title);
+  return "/write-ups/" + slug(w.title) + "/";
 }
 
 /** Date « JJ.MM.AAAA » en nombre AAAAMMJJ, pour les tris. */

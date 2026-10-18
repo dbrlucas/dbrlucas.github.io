@@ -33,8 +33,8 @@ function pagefind(): Promise<Pagefind | null> {
   return chargement;
 }
 
-/** Les adresses de l'index finissent par « / » ; celles du site non. */
-export const normaliser = (url: string) => url.replace(/\/index\.html$/, "").replace(/\/+$/, "") || "/";
+/** Adresse d'une page de l'index, au format des liens du site : toujours une barre finale. */
+export const normaliser = (url: string) => url.replace(/index\.html$/, "").replace(/\/*$/, "/");
 
 /** Adresse de page → extrait où le terme apparaît (balises <mark> incluses). */
 export type Extraits = Map<string, string>;

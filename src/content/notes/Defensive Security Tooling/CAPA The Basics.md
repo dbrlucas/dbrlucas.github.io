@@ -14,7 +14,7 @@ lien: "https://tryhackme.com/room/capabasics"
 
 **CAPA (Common Analysis Platform for Artifacts)** : outil développé par l'équipe FireEye Mandiant. Il identifie automatiquement les capacités d'un fichier exécutable, grâce à des règles qui décrivent des comportements courants.
 
-**Capacité** : fonctionnalité qu'un programme peut exécuter, comme communiquer sur le réseau, manipuler des fichiers ou s'injecter dans un processus.
+**Capacité** : fonctionnalité qu'un programme peut exécuter comme communiquer sur le réseau, manipuler des fichiers ou s'injecter dans un processus.
 
 **Analyse statique** : étude d'un programme sans l'exécuter, à partir de son code ou de sa structure.
 
@@ -35,7 +35,7 @@ Exécuter un logiciel suspect hors d'un environnement isolé peut compromettre l
 Il accepte plusieurs formats, dont les exécutables PE et ELF, les modules .NET, le shellcode et les rapports de bac à sable.
 
 > [!note] Des capacités potentielles
-> CAPA signale ce qu'un fichier peut faire, d'après des indices statiques. Ses résultats se confirment par une analyse dynamique en bac à sable et par le recoupement avec les journaux et le trafic réseau.
+> CAPA signale ce qu'un fichier peut faire d'après des indices statiques. Ses résultats se confirment par une analyse dynamique en bac à sable et par le recoupement avec les journaux et le trafic réseau.
 
 ## Lancer CAPA
 
@@ -58,7 +58,7 @@ capa.exe -j -vv .\echantillon.exe > resultat.json
 | `-vv` | Montre toutes les correspondances de règles. L'analyse est plus lente |
 | `-j` | Produit le résultat au format JSON |
 
-L'analyse peut prendre plusieurs minutes, selon la taille et la complexité du fichier. Quand un résultat a déjà été enregistré dans un fichier texte, on le relit avec `Get-Content` au lieu de relancer l'analyse.
+L'analyse peut prendre plusieurs minutes selon la taille et la complexité du fichier. Quand un résultat a déjà été enregistré dans un fichier texte, on le relit avec `Get-Content` au lieu de relancer l'analyse.
 
 ## Lire le rapport
 
@@ -68,7 +68,7 @@ Le premier bloc identifie l'échantillon et précise comment il a été analysé
 
 | Champ | Contenu |
 | --- | --- |
-| `md5`, `sha1`, `sha256` | Empreintes du fichier, qui l'identifient de façon unique |
+| `md5`, `sha1`, `sha256` | Empreintes du fichier qui l'identifient de façon unique |
 | `analysis` | Méthode d'analyse, par exemple `static` |
 | `os` | Système visé, par exemple `windows` |
 | `format` | Format du fichier, par exemple `pe` pour un exécutable Windows |
@@ -89,13 +89,13 @@ DEFENSE EVASION :: Obfuscated Files or Information [T1027]
 | --- | --- | --- |
 | Tactique | Objectif poursuivi par l'attaquant | `DEFENSE EVASION` |
 | Technique | Méthode employée pour l'atteindre | `Obfuscated Files or Information` |
-| Identifiant | Code de la technique. Une sous-technique ajoute un suffixe, comme `T1027.005` | `T1027` |
+| Identifiant | Code de la technique. Une sous-technique ajoute un suffixe comme `T1027.005` | `T1027` |
 
 Cette correspondance aide à fixer les priorités. Elle permet aussi de rédiger des rapports dans un vocabulaire que les équipes SOC et de réponse à incident partagent.
 
 ### MAEC
 
-CAPA attribue au fichier une catégorie MAEC, qui résume son profil.
+CAPA attribue au fichier une catégorie MAEC qui résume son profil.
 
 | Valeur | Signification | À vérifier |
 | --- | --- | --- |
@@ -122,7 +122,7 @@ Le MBC classe les comportements par **objectifs**, proches des tactiques d'ATT&C
 | Persistence | Rester actif sur le système dans la durée |
 | Privilege Escalation | Obtenir des privilèges plus élevés |
 
-Il décrit aussi des **micro-comportements**, plus élémentaires. Chacun est souvent légitime pris isolément, mais peut faire partie d'un schéma malveillant. Ils sont regroupés en micro-objectifs.
+Il décrit aussi des **micro-comportements**, plus élémentaires. Chacun est souvent légitime pris isolément mais peut faire partie d'un schéma malveillant. Ils sont regroupés en micro-objectifs.
 
 | Micro-objectif | Actions concernées |
 | --- | --- |
@@ -149,15 +149,15 @@ Ici, le fichier est donc capable d'encoder des données en Base64.
 
 ### Espaces de noms et capacités
 
-CAPA range ses règles dans des **espaces de noms** (namespaces), qui regroupent celles qui ont un but voisin. Le premier niveau s'appelle le Top-Level Namespace, ou TLN.
+CAPA range ses règles dans des **espaces de noms** (namespaces) qui regroupent celles qui ont un but proche. Le premier niveau s'appelle le Top-Level Namespace ou TLN.
 
 | TLN | Ce qu'il regroupe |
 | --- | --- |
 | `anti-analysis` | Techniques pour échapper à l'analyse (détection de machine virtuelle, anti-débogage, obfuscation) |
-| `communication` | Échanges réseau, comme HTTP |
+| `communication` | Échanges réseau comme HTTP |
 | `data-manipulation` | Modification et encodage de données (Base64, XOR) |
-| `host-interaction` | Actions sur l'hôte, comme la lecture, l'écriture ou la suppression de fichiers |
-| `persistence` | Moyens de rester actif après un redémarrage, comme les tâches planifiées |
+| `host-interaction` | Actions sur l'hôte comme la lecture, l'écriture ou la suppression de fichiers |
+| `persistence` | Moyens de rester actif après un redémarrage comme les tâches planifiées |
 | `load-code` | Chargement de code |
 | `impact` | Actions destructrices ou perturbatrices |
 | `linking` | Liaison avec des bibliothèques |
@@ -171,13 +171,13 @@ Chaque **capacité** détectée correspond à une règle, écrite dans un fichie
 | Espace de noms | `encoding/base64` |
 | TLN | `data-manipulation` |
 
-Les règles encore expérimentales sont rangées à part, dans la catégorie *nursery*.
+Les règles encore expérimentales sont rangées à part dans la catégorie *nursery*.
 
 Cette hiérarchie répond à quatre questions sur un fichier. Elle dit comment il interagit avec l'hôte, comment il évite l'analyse, s'il charge du code externe et comment il persiste.
 
 ## Aller plus loin dans les résultats
 
-Avec `-vv`, CAPA montre précisément quels éléments du fichier ont déclenché chaque règle, comme une chaîne, un motif ou un appel d'API. Une règle sur les tâches planifiées repose par exemple sur la présence des chaînes `schtasks` et `create`.
+Avec `-vv`, CAPA montre précisément quels éléments du fichier ont déclenché chaque règle comme une chaîne, un motif ou un appel d'API. Une règle sur les tâches planifiées repose par exemple sur la présence des chaînes `schtasks` et `create`.
 
 Cette sortie peut atteindre des milliers de lignes, difficiles à lire dans un terminal. L'option `-j` l'exporte en JSON. Le fichier se charge alors dans **CAPA Web Explorer**, une interface graphique qui permet de parcourir les capacités, de chercher dans les résultats et de voir les règles déclenchées.
 
@@ -185,6 +185,6 @@ Cette sortie peut atteindre des milliers de lignes, difficiles à lire dans un t
 
 - CAPA liste les capacités d'un exécutable sans l'exécuter.
 - Son rapport commence par les empreintes, le format et l'architecture du fichier.
-- Il traduit ses détections dans trois référentiels, MITRE ATT&CK, MAEC et MBC.
+- Il traduit ses détections dans trois référentiels : MITRE ATT&CK, MAEC et MBC.
 - Chaque capacité correspond à une règle YAML, rangée dans un espace de noms.
 - Ce sont des capacités potentielles, à confirmer par une analyse dynamique.

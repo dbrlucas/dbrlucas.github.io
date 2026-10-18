@@ -1,7 +1,7 @@
 ---
 titre: "IDS Fundamentals"
 description: "Apprendre les bases des IDS et s'exercer avec Snort."
-resume: "Un IDS surveille le réseau et alerte quand il repère une activité suspecte, là où le pare-feu se contente de filtrer à l'entrée. Cette note présente les types d'IDS et leurs méthodes de détection, puis la prise en main de Snort, de l'écriture d'une règle à l'analyse d'une capture."
+resume: "Un IDS surveille le réseau et alerte quand il repère une activité suspecte, là où le pare-feu se contente de filtrer. Cette note présente les types d'IDS et leurs méthodes de détection, puis la prise en main de Snort, de l'écriture d'une règle à l'analyse d'une capture."
 date: "05.10.2025"
 plateforme: "TryHackMe"
 parcours: "Cyber Security 101"
@@ -14,7 +14,7 @@ lien: "https://tryhackme.com/room/idsfundamentals"
 
 **IDS (Intrusion Detection System)** : système de détection d'intrusion. Il surveille le trafic en temps réel et génère une alerte quand il détecte une activité suspecte ou malveillante. Contrairement au pare-feu, il ne bloque pas les connexions.
 
-**Signature** : modèle d'une attaque connue, auquel le trafic est comparé.
+**Signature** : modèle d'une attaque connue auquel le trafic est comparé.
 
 **Ligne de base (baseline)** : comportement normal attendu d'un système ou d'un réseau.
 
@@ -22,11 +22,11 @@ lien: "https://tryhackme.com/room/idsfundamentals"
 
 **PCAP (Packet Capture)** : format standard de capture de paquets réseau, utilisé pour analyser un trafic après coup.
 
-**Mode promiscuité (promiscuous mode)** : mode dans lequel une interface réseau capture tous les paquets qui circulent, et pas seulement ceux qui lui sont adressés.
+**Mode promiscuité (promiscuous mode)** : mode dans lequel une interface réseau capture tous les paquets qui circulent et pas seulement ceux qui lui sont adressés.
 
 ## Pare-feu et IDS
 
-Le pare-feu est le gardien posté à l'entrée du réseau. L'IDS est la caméra de surveillance placée à l'intérieur. Il n'empêche pas une attaque, mais il la détecte et alerte les administrateurs.
+Le pare-feu est le gardien posté à l'entrée du réseau. L'IDS est la caméra de surveillance placée à l'intérieur. Il n'empêche pas une attaque mais il la détecte et alerte les administrateurs.
 
 Les deux se complètent. L'IDS est surtout utile quand un attaquant a contourné le pare-feu en passant par une connexion légitime.
 
@@ -45,8 +45,8 @@ Les deux se complètent. L'IDS est surtout utile quand un attaquant a contourné
 
 | Méthode | Principe | Atout et limite |
 | --- | --- | --- |
-| Par signature | Compare le trafic à une base d'attaques connues | Détecte vite les menaces connues. Inefficace contre les zero-days, et dépend de la qualité de la base |
-| Par anomalie | Repère les écarts par rapport à la ligne de base | Peut détecter des zero-days, mais génère souvent plus de faux positifs |
+| Par signature | Compare le trafic à une base d'attaques connues | Détecte vite les menaces connues. Inefficace contre les zero-days et dépend de la qualité de la base |
+| Par anomalie | Repère les écarts par rapport à la ligne de base | Peut détecter des zero-days mais génère souvent plus de faux positifs |
 | Hybride | Combine les deux méthodes | Couvre les menaces connues et les nouvelles |
 
 ## Snort
@@ -89,7 +89,7 @@ alert icmp any any -> $HOME_NET any (msg:"Ping Detected"; sid:10001; rev:1;)
 
 ### Écrire et tester une règle
 
-On ajoute d'abord la règle dans le fichier des règles personnalisées. Celle-ci signale tout ping envoyé à l'adresse de bouclage.
+On ajoute d'abord la règle dans le fichier des règles personnalisées. Celle-ci signale tout ping envoyé à l'adresse de loopback.
 
 ```bash
 sudo nano /etc/snort/rules/local.rules
@@ -99,7 +99,7 @@ sudo nano /etc/snort/rules/local.rules
 alert icmp any any -> 127.0.0.1 any (msg:"Loopback Ping Detected"; sid:10003; rev:1;)
 ```
 
-On lance ensuite Snort en mode NIDS sur l'interface de bouclage `lo`, avec les alertes affichées dans la console.
+On lance ensuite Snort en mode NIDS sur l'interface de loopback `lo` avec les alertes affichées dans la console.
 
 ```bash
 sudo snort -q -l /var/log/snort -i lo -A console -c /etc/snort/snort.conf
@@ -119,7 +119,7 @@ Snort affiche alors l'alerte, ce qui confirme que la règle fonctionne.
 
 ### Analyser une capture
 
-Snort sait aussi rejouer un trafic enregistré au format PCAP, pour une enquête après incident. L'option `-r` remplace alors l'interface par le fichier à lire.
+Snort sait aussi rejouer un trafic enregistré au format PCAP pour une enquête après incident. L'option `-r` remplace alors l'interface par le fichier à lire.
 
 ```bash
 sudo snort -q -l /var/log/snort -r capture.pcap -A console -c /etc/snort/snort.conf
@@ -129,6 +129,6 @@ sudo snort -q -l /var/log/snort -r capture.pcap -A console -c /etc/snort/snort.c
 
 - Le pare-feu filtre à l'entrée, l'IDS surveille à l'intérieur et alerte.
 - Un HIDS protège un hôte, un NIDS observe tout le réseau.
-- La détection par signature vise les menaces connues, la détection par anomalie les menaces nouvelles.
-- Snort fonctionne en trois modes, sniffer, packet logging et NIDS.
+- La détection par signature vise les menaces connues, la détection par anomalie les nouvelles menaces.
+- Snort fonctionne en trois modes : sniffer, packet logging et NIDS.
 - Une règle Snort indique une action, un protocole, une source, une destination et des options comme `msg`, `sid` et `rev`.
