@@ -1,6 +1,6 @@
 ---
 titre: "CTF Active Directory"
-description: "Compromission progressive d'un domaine Active Directory, d'un mot de passe faible jusqu'au contrôle total du contrôleur de domaine."
+description: "Compromission d'un domaine AD, d'un mot de passe faible jusqu'au contrôle total du contrôleur de domaine."
 resume: "On compromet un domaine Active Directory, d'un simple mot de passe faible jusqu'au contrôle total du contrôleur de domaine. Ce write-up enchaîne une dizaine de challenges (énumération, Kerberoasting, AS-REP Roasting, RBCD, Golden Ticket, GPO), puis en tire les leçons de défense."
 date: "18.09.2026"
 plateforme: "Lab M2"

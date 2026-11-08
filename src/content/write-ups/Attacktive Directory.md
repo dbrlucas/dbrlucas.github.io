@@ -1,7 +1,7 @@
 ---
 titre: "Attacktive Directory"
-description: "99 % des réseaux d'entreprise fonctionnent avec AD. Mais saurez-vous exploiter un contrôleur de domaine vulnérable ?"
-resume: "On part d'un accès non authentifié sur le réseau pour aller jusqu'au compte Administrateur du domaine, en enchaînant des faiblesses de configuration classiques d'Active Directory. Ce write-up suit toute la chaîne, de l'énumération à la prise de contrôle du contrôleur de domaine, puis en tire les leçons en terme de défense."
+description: "99 % des réseaux d'entreprise fonctionnent avec AD. Mais peux-tu exploiter un contrôleur de domaine vulnérable ?"
+resume: "On part d'un accès non authentifié sur le réseau pour aller jusqu'au compte Administrateur du domaine, en enchaînant des faiblesses de configuration d'Active Directory. Ce write-up suit toute la chaîne, de l'énumération à la prise de contrôle du contrôleur de domaine, puis en tire les leçons de défense."
 date: "19.09.2026"
 plateforme: "TryHackMe"
 categorie: "Active Directory"
@@ -11,38 +11,9 @@ lien: "https://tryhackme.com/room/attacktivedirectory"
 
 ## Objectif et contexte
 
-Active Directory (AD) est le service d'annuaire de Microsoft. La plupart des réseaux d'entreprise s'en servent pour gérer l'authentification, les comptes et les autorisations. Le contrôleur de domaine (DC) en est le cœur. Il héberge la base d'annuaire et fait tourner les services d'authentification, notamment Kerberos et LDAP.
+Le contrôleur de domaine (DC) héberge la base d'annuaire et fait tourner les services d'authentification, notamment Kerberos et LDAP.
 
 Ce challenge part d'un accès non authentifié sur le réseau et cible le compte Administrateur du domaine, en exploitant une chaîne de mauvaises configurations. C'est un cas classique. Il montre pourquoi la sécurité d'un DC tient autant à sa configuration qu'à ses correctifs.
-
-## Méthodologie et chemin d'attaque
-
-La compromission suit une chaîne logique où chaque étape débloque la suivante.
-
-```text
-Aucun accès
-   |  nmap / enum4linux            -> cartographie des services, nom de domaine
-   .
-Énumération anonyme (null session)
-   |  Kerbrute userenum            -> liste d'utilisateurs valides (svc-admin, backup…)
-   .
-Utilisateurs valides
-   |  AS-REP Roasting (GetNPUsers) -> hash Kerberos de svc-admin (pas de pré-auth)
-   |  Hashcat                      -> mot de passe en clair
-   .
-Compte svc-admin (utilisateur du domaine)
-   |  smbclient sur le partage "backup" + décodage Base64
-   .
-Compte backup (droits de réplication AD)
-   |  secretsdump.py (DCSync via DRSUAPI) -> tous les hash NTLM du domaine
-   .
-Hash NTLM de l'Administrateur
-   |  Evil-WinRM -H (Pass-the-Hash)
-   .
-Contrôle total du domaine (Domain Admin)
-```
-
-La logique à retenir est qu'on n'a jamais eu besoin de "casser" le DC lui-même. On a enchaîné des faiblesses de configuration (pré-authentification désactivée, mot de passe faible, secret en clair sur un partage, privilèges excessifs sur un compte de service) jusqu'à la prise de contrôle.
 
 ## Énumération réseau (nmap)
 
@@ -309,6 +280,35 @@ Les trois flags se trouvent sur le bureau de chaque compte.
 | `svc-admin` | `C:\Users\svc-admin\Desktop\user.txt.txt` |
 | `backup` | `C:\Users\backup\Desktop\PrivEsc.txt` |
 | `Administrator` | `C:\Users\Administrator\Desktop\root.txt` |
+
+## Méthodologie et chemin d'attaque
+
+La compromission suit une chaîne logique où chaque étape débloque la suivante.
+
+```text
+Aucun accès
+   |  nmap / enum4linux            -> cartographie des services, nom de domaine
+   .
+Énumération anonyme (null session)
+   |  Kerbrute userenum            -> liste d'utilisateurs valides (svc-admin, backup…)
+   .
+Utilisateurs valides
+   |  AS-REP Roasting (GetNPUsers) -> hash Kerberos de svc-admin (pas de pré-auth)
+   |  Hashcat                      -> mot de passe en clair
+   .
+Compte svc-admin (utilisateur du domaine)
+   |  smbclient sur le partage "backup" + décodage Base64
+   .
+Compte backup (droits de réplication AD)
+   |  secretsdump.py (DCSync via DRSUAPI) -> tous les hash NTLM du domaine
+   .
+Hash NTLM de l'Administrateur
+   |  Evil-WinRM -H (Pass-the-Hash)
+   .
+Contrôle total du domaine (Domain Admin)
+```
+
+La logique à retenir est qu'on n'a jamais eu besoin de "casser" le DC lui-même. On a enchaîné des faiblesses de configuration (pré-authentification désactivée, mot de passe faible, secret en clair sur un partage, privilèges excessifs sur un compte de service) jusqu'à la prise de contrôle.
 
 ## Analyse, remédiation et leçons
 
