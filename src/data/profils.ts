@@ -12,6 +12,6 @@ export type Profile = {
 };
 
 export const profiles: Profile[] = [
-  { name: "TryHackMe", metric: "Top 2%", handle: "tryhackme.com/p/dbrlucas", url: "https://tryhackme.com/p/dbrlucas" },
-  { name: "Root-Me", metric: "1 410 pts", handle: "root-me.org/dbrlucas", url: "https://www.root-me.org/dbrlucas" }
+  { name: "TryHackMe", metric: "Top 1%", handle: "tryhackme.com/p/dbrlucas", url: "https://tryhackme.com/p/dbrlucas" },
+  { name: "Root-Me", metric: "1 400+ pts", handle: "root-me.org/dbrlucas", url: "https://www.root-me.org/dbrlucas" }
 ];
